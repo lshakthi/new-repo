@@ -44,13 +44,13 @@
   --color-text-tertiary: #9CA3AF;
   --color-text-inverse: #FFFFFF;
 
-  /* Spacing scale */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
+  /* Custom spacing (use via arbitrary values, not overriding Tailwind's spacing) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
 
   /* Radius */
   --radius-sm: 4px;
