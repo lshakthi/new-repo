@@ -21,6 +21,13 @@ export interface ChatSection {
     topic: string;
     positions: Array<{ position: string; summary: string }>;
   };
+  tableData?: {
+    headers: string[];
+    rows: string[][];
+  };
+  chartData?: Array<{ name: string; value: number }>;
+  chartType?: 'bar' | 'pie';
+  metrics?: Array<{ label: string; value: string }>;
 }
 
 export interface TaskConversation {
@@ -141,6 +148,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'ta-s1', title: 'Disease association strength',
           content: 'IL6R has one of the strongest genetic associations with RA. The IL6R p.D358A variant (rs2228145) is protective against RA in GWAS, directly implicating IL-6 signaling in disease pathogenesis. Open Targets overall association score: 0.94.',
           confidence: 'strong',
+          metrics: [
+            { label: 'Open Targets score', value: '0.94' },
+            { label: 'GWAS studies', value: '12' },
+            { label: 'Genetic evidence', value: 'Strong' },
+            { label: 'Known drugs', value: '2 approved' },
+          ],
           citations: [
             { id: 'ta-c1', label: 'Open Targets: IL6R-RA', sourceType: 'database' },
             { id: 'ta-c2', label: 'PMID 35231073 (GWAS)', sourceType: 'pubmed' },
@@ -150,6 +163,13 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'ta-s2', title: 'Clinical validation',
           content: 'Two approved anti-IL6R antibodies: tocilizumab (Actemra, Roche) and sarilumab (Kevzara, Sanofi/Regeneron). Both show efficacy in moderate-to-severe RA. This is definitive clinical validation that the target works.',
           confidence: 'strong',
+          tableData: {
+            headers: ['Drug', 'Company', 'Approval', 'Route', 'Annual Sales (2025)'],
+            rows: [
+              ['Tocilizumab (Actemra)', 'Roche', '2010', 'IV / SC', '$3.2B'],
+              ['Sarilumab (Kevzara)', 'Sanofi/Regeneron', '2017', 'SC', '$1.1B'],
+            ]
+          },
           citations: [
             { id: 'ta-c3', label: 'FDA label: tocilizumab', sourceType: 'database' },
             { id: 'ta-c4', label: 'FDA label: sarilumab', sourceType: 'database' },
@@ -289,6 +309,16 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'cd-s1', title: 'Approved EGFR inhibitors',
           content: 'Five FDA-approved small molecule EGFR inhibitors: erlotinib (1st gen), gefitinib (1st gen), afatinib (2nd gen), dacomitinib (2nd gen), and osimertinib (3rd gen). Osimertinib is now first-line standard of care for EGFR-mutant NSCLC.',
           confidence: 'strong',
+          tableData: {
+            headers: ['Drug', 'Generation', 'Company', 'Year', 'Mechanism'],
+            rows: [
+              ['Erlotinib (Tarceva)', '1st', 'Roche', '2004', 'Reversible TKI'],
+              ['Gefitinib (Iressa)', '1st', 'AstraZeneca', '2003', 'Reversible TKI'],
+              ['Afatinib (Gilotrif)', '2nd', 'Boehringer', '2013', 'Irreversible pan-HER'],
+              ['Dacomitinib (Vizimpro)', '2nd', 'Pfizer', '2018', 'Irreversible pan-HER'],
+              ['Osimertinib (Tagrisso)', '3rd', 'AstraZeneca', '2015', 'T790M-mutant selective'],
+            ]
+          },
           citations: [
             { id: 'cd-c1', label: 'ChEMBL target report: EGFR', sourceType: 'database' },
             { id: 'cd-c2', label: 'NCCN NSCLC v5.2026', sourceType: 'web' },
@@ -338,6 +368,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'cl-s1', title: 'Active trial landscape',
           content: '87 trials with status RECRUITING or ACTIVE_NOT_RECRUITING found for glioblastoma. 52% are Phase 1 or Phase 1/2, indicating the field is still largely exploratory. Top sponsors: NCI (14 trials), Bristol-Myers Squibb (6), Novartis (5), academic medical centers (38).',
           confidence: 'strong',
+          metrics: [
+            { label: 'Total active trials', value: '87' },
+            { label: 'Phase 1/2', value: '52%' },
+            { label: 'Top sponsor', value: 'NCI (14)' },
+            { label: 'Academic-led', value: '38' },
+          ],
           citations: [
             { id: 'cl-c1', label: 'ClinicalTrials.gov: 87 results', sourceType: 'trial' },
           ]
@@ -346,6 +382,15 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'cl-s2', title: 'Dominant approaches',
           content: 'Immunotherapy combinations (checkpoint inhibitors + novel agents): 31 trials. CAR-T and cell therapy: 12 trials. Targeted kinase inhibitors: 9 trials. Tumor treating fields combinations: 7 trials. Oncolytic virus therapy: 5 trials.',
           confidence: 'strong',
+          chartData: [
+            { name: 'Immunotherapy', value: 31 },
+            { name: 'CAR-T/Cell', value: 12 },
+            { name: 'Kinase inh.', value: 9 },
+            { name: 'TTFields', value: 7 },
+            { name: 'Oncolytic virus', value: 5 },
+            { name: 'Other', value: 23 },
+          ],
+          chartType: 'bar' as const,
           citations: [
             { id: 'cl-c2', label: 'ClinicalTrials.gov analysis', sourceType: 'trial' },
           ]
@@ -392,6 +437,16 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'pf-s2', title: 'Crowded versus open areas',
           content: 'Most crowded: HER2-targeting ADCs (67 filings), Trop-2 (43 filings), linker-payload chemistry for topoisomerase inhibitors (38 filings). Less crowded: Nectin-4 ADCs (8 filings), CLDN18.2 (6 filings), novel payload classes like TLR agonists (4 filings).',
           confidence: 'moderate',
+          chartData: [
+            { name: 'HER2', value: 67 },
+            { name: 'Trop-2', value: 43 },
+            { name: 'Linker/Payload', value: 38 },
+            { name: 'Nectin-4', value: 8 },
+            { name: 'CLDN18.2', value: 6 },
+            { name: 'TLR payload', value: 4 },
+            { name: 'Other', value: 246 },
+          ],
+          chartType: 'pie' as const,
           citations: [
             { id: 'pf-c2', label: 'PatentsView classification', sourceType: 'patent' },
             { id: 'pf-c3', label: 'Google Patents: ADC trends', sourceType: 'patent' },
@@ -568,6 +623,14 @@ taskConversations['vertical-therapeutics'] = {
         id: 'vt-s2', title: 'Resistance and unmet need',
         content: 'Nearly all patients develop resistance within 2-3 years. Key mechanisms: RB1 loss (30%), CDK6 amplification (15%), PI3K pathway activation (20%), and CCNE1 amplification (10%). No approved therapy specifically targets CDK4/6i-resistant disease. This is the primary whitespace for new entrants.',
         confidence: 'moderate',
+        chartData: [
+          { name: 'RB1 loss', value: 30 },
+          { name: 'PI3K activation', value: 20 },
+          { name: 'CDK6 amp', value: 15 },
+          { name: 'CCNE1 amp', value: 10 },
+          { name: 'Other/unknown', value: 25 },
+        ],
+        chartType: 'pie' as const,
         citations: [
           { id: 'vt-c3', label: 'PMID 37892345', sourceType: 'pubmed' },
           { id: 'vt-c4', label: 'PMID 38567123', sourceType: 'pubmed' },

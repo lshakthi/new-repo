@@ -4,11 +4,11 @@ import { mockTaskGroups } from '../mocks/tasks';
 import { taskConversations, defaultConversation } from '../mocks/conversations';
 import type { TaskConversation } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
-import { CitationChip, ConfidenceBadge, ProvenanceTrail } from '../design-system';
+import { ChatResponse } from '../components/ChatResponse';
 import {
   FlaskConical, Target, Atom, Map, Eye, Package, Zap,
   ArrowRight, Clock, ShieldAlert, Search, Send, User, Bot,
-  ChevronDown, ChevronRight, ArrowLeft
+  ArrowLeft
 } from 'lucide-react';
 
 const groupIcons: Record<string, typeof FlaskConical> = {
@@ -22,12 +22,11 @@ const groupIcons: Record<string, typeof FlaskConical> = {
 };
 
 export function TaskLauncherPage() {
-  const { mode, setEvidencePanelOpen, setActiveSourceId } = useApp();
+  const { mode } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // Get conversation for the selected task
   const conversation: TaskConversation = activeTask
@@ -61,24 +60,12 @@ export function TaskLauncherPage() {
     setActiveTask(null);
   };
 
-  const handleCitationClick = (id: string) => {
-    setActiveSourceId(id);
-    setEvidencePanelOpen(true);
-  };
-
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
       setActiveTask('custom-query');
       setInputValue('');
     }
-  };
-
-  const toggleSection = (id: string) => {
-    const next = new Set(expandedSections);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setExpandedSections(next);
   };
 
   // ─── ACTIVE TASK: Show inline chat ───────────────────────────
@@ -124,102 +111,19 @@ export function TaskLauncherPage() {
 
               {/* Assistant response */}
               {msg.role === 'assistant' && msg.sections && (
-                <div className="flex items-start gap-3 max-w-3xl">
+                <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-cei-blue flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Bot size={12} className="text-white" />
                   </div>
-                  <div className="flex-1 space-y-3">
-                    {/* Plain summary */}
-                    <p className="text-sm text-text-primary leading-relaxed">
-                      {conversation.summary}
-                    </p>
-
-                    {/* Collapsible sections */}
-                    {msg.sections.map((section) => {
-                      const isExpanded = expandedSections.has(section.id);
-                      return (
-                        <div key={section.id} className="rounded-lg border border-border-subtle overflow-hidden">
-                          <button
-                            onClick={() => toggleSection(section.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-surface-panel/50 transition-colors"
-                          >
-                            {isExpanded
-                              ? <ChevronDown size={14} className="text-text-tertiary flex-shrink-0" />
-                              : <ChevronRight size={14} className="text-text-tertiary flex-shrink-0" />
-                            }
-                            <span className="text-sm font-medium text-text-primary flex-1">{section.title}</span>
-                            <ConfidenceBadge level={section.confidence} size="sm" />
-                          </button>
-
-                          {isExpanded && (
-                            <div className="px-4 pb-3 pt-1 border-t border-border-subtle bg-surface-panel/20">
-                              <p className="text-sm text-text-secondary leading-relaxed">{section.content}</p>
-
-                              {section.citations && section.citations.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {section.citations.map((cit) => (
-                                    <CitationChip
-                                      key={cit.id}
-                                      id={cit.id}
-                                      label={cit.label}
-                                      sourceType={cit.sourceType}
-                                      onClick={handleCitationClick}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-
-                              {section.uncertainties && section.uncertainties.map((u, i) => (
-                                <p key={i} className="text-xs text-text-tertiary mt-2 italic">
-                                  Open question: {u.what} To resolve: {u.resolution}
-                                </p>
-                              ))}
-
-                              {section.conflict && (
-                                <div className="mt-2 p-2.5 rounded-md bg-evidence-conflict-bg/50 border border-evidence-conflict/10">
-                                  <p className="text-xs font-medium text-evidence-conflict mb-1">
-                                    Experts disagree: {section.conflict.topic}
-                                  </p>
-                                  {section.conflict.positions.map((pos, i) => (
-                                    <p key={i} className="text-xs text-text-secondary mt-1">
-                                      <span className="font-medium">{pos.position}:</span> {pos.summary}
-                                    </p>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {/* Review notice */}
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-review-required-bg/50 border border-review-required/15">
-                      <span className="text-xs text-review-required font-medium">Note:</span>
-                      <span className="text-xs text-text-secondary">
-                        This is decision support. A qualified reviewer should check before acting on it.
-                      </span>
-                    </div>
-
-                    {/* Provenance */}
-                    {msg.provenance && (
-                      <ProvenanceTrail steps={msg.provenance} totalDuration={msg.totalDuration} />
-                    )}
-
-                    {/* Follow-ups */}
-                    {msg.followUps && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {msg.followUps.map((fu, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setInputValue(fu)}
-                            className="text-xs px-3 py-1.5 rounded-full border border-border-subtle text-text-secondary hover:border-cei-blue-light/40 hover:text-cei-blue transition-all"
-                          >
-                            {fu}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex-1">
+                    <ChatResponse
+                      summary={conversation.summary}
+                      sections={msg.sections}
+                      provenance={msg.provenance}
+                      totalDuration={msg.totalDuration}
+                      followUps={msg.followUps}
+                      onFollowUpClick={(text) => setInputValue(text)}
+                    />
                   </div>
                 </div>
               )}
