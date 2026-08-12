@@ -444,3 +444,157 @@ export const defaultConversation: TaskConversation = {
     ]},
   ],
 };
+
+
+// Vertical-specific conversations
+taskConversations['vertical-diagnostics'] = {
+  taskId: 'vertical-diagnostics',
+  title: 'cfDNA liquid biopsy for early CRC detection',
+  summary: 'Cell-free DNA liquid biopsy for colorectal cancer screening is a fast-growing field. Guardant Shield is the first FDA-authorized blood test for CRC screening. Key challenges are sensitivity for early-stage disease and Medicare coverage.',
+  messages: [
+    { id: 'vd-1', role: 'user', content: 'I am building a cfDNA liquid biopsy for early colorectal cancer detection. What should I know?' },
+    { id: 'vd-2', role: 'system', content: 'Pulling regulatory landscape, competitive tests, clinical evidence, and reimbursement context for cfDNA CRC screening.' },
+    { id: 'vd-3', role: 'assistant', content: '', sections: [
+      {
+        id: 'vd-s1', title: 'Competitive landscape',
+        content: 'Guardant Health Shield received FDA De Novo authorization in 2024 as the first blood-based CRC screening test. Sensitivity: 83% for CRC, 13% for advanced adenomas. Freenome and GRAIL are also developing blood-based multi-cancer early detection tests that include CRC. The market is early but accelerating.',
+        confidence: 'strong',
+        citations: [
+          { id: 'vd-c1', label: 'FDA DEN200081 (Shield)', sourceType: 'database' },
+          { id: 'vd-c2', label: 'PMID 39102345 (ECLIPSE trial)', sourceType: 'pubmed' },
+        ]
+      },
+      {
+        id: 'vd-s2', title: 'Regulatory path',
+        content: 'De Novo classification is the established pathway (no 510(k) predicate existed before Shield). Your submission would reference Shield as a precedent but still require an independent clinical validation study. FDA expects sensitivity and specificity data from a prospective screening population, not enriched cohorts.',
+        confidence: 'strong',
+        citations: [
+          { id: 'vd-c3', label: 'FDA guidance: liquid biopsy', sourceType: 'web' },
+        ]
+      },
+      {
+        id: 'vd-s3', title: 'Reimbursement challenge',
+        content: 'Medicare coverage is the critical bottleneck. Guardant Shield received a Medicare coverage determination in 2025, but the path required years of evidence generation and a specific coverage with evidence development (CED) agreement. Private payers remain mixed. Budget impact concerns are real given the large screening-eligible population.',
+        confidence: 'moderate',
+        citations: [
+          { id: 'vd-c4', label: 'CMS NCD for Shield', sourceType: 'web' },
+          { id: 'vd-c5', label: 'PMID 38456789', sourceType: 'pubmed' },
+        ]
+      },
+    ],
+    provenance: [
+      { id: 'vd-p1', action: 'Searched FDA device database for cfDNA CRC tests', source: 'openFDA', duration: '1.4s', icon: 'database' },
+      { id: 'vd-p2', action: 'Queried ClinicalTrials.gov for cfDNA CRC screening studies', source: 'CT.gov API', duration: '1.8s', icon: 'search' },
+      { id: 'vd-p3', action: 'Searched PubMed for clinical performance data', source: 'PubMed', duration: '2.1s', icon: 'search' },
+    ],
+    totalDuration: '16 seconds',
+    followUps: [
+      'What sensitivity do I need to match Guardant Shield?',
+      'How long did the Shield Medicare coverage process take?',
+      'What clinical study design does FDA expect?',
+      'Who are the key opinion leaders in this space?',
+    ]},
+  ],
+};
+
+taskConversations['vertical-medical devices'] = {
+  taskId: 'vertical-medical devices',
+  title: 'AI-powered surgical guidance system',
+  summary: 'AI surgical guidance is regulated as a Class II medical device. Multiple predicates exist depending on your specific claims. Key differentiators are real-time performance, surgical specialty focus, and integration with existing OR equipment.',
+  messages: [
+    { id: 'vm-1', role: 'user', content: 'I am building an AI-powered surgical guidance system. What FDA pathway should I use?' },
+    { id: 'vm-2', role: 'system', content: 'Checking FDA device classifications, recent clearances, and relevant guidance for AI surgical tools.' },
+    { id: 'vm-3', role: 'assistant', content: '', sections: [
+      {
+        id: 'vm-s1', title: 'Likely pathway: 510(k)',
+        content: 'Most AI surgical guidance systems have been cleared via 510(k). The specific product code depends on your surgical specialty and claims. QAS (image-guided surgery), QDT (surgical planning software), and LLZ (computer-assisted surgery) are all relevant. 14 AI-enabled surgical guidance devices were cleared in 2024-2025.',
+        confidence: 'strong',
+        citations: [
+          { id: 'vm-c1', label: 'FDA product codes: QAS, QDT, LLZ', sourceType: 'database' },
+          { id: 'vm-c2', label: 'FDA AI/ML cleared devices list', sourceType: 'web' },
+        ]
+      },
+      {
+        id: 'vm-s2', title: 'Predicate selection',
+        content: 'Strong potential predicates: Medtronic StealthStation (K203832), Stryker Mako (K201394), and Viz.ai for intraoperative alerting (K193225). Your predicate choice depends heavily on whether your system provides navigation, measurement, segmentation, or decision support. Narrow your intended use statement before selecting.',
+        confidence: 'moderate',
+        citations: [
+          { id: 'vm-c3', label: 'FDA 510(k) database search', sourceType: 'database' },
+        ]
+      },
+      {
+        id: 'vm-s3', title: 'Key FDA expectations',
+        content: 'FDA will expect: (1) clinical validation showing non-inferiority to existing standard of care, (2) a locked algorithm with defined update procedures, (3) cybersecurity documentation per FDA premarket guidance, (4) human factors/usability testing in a simulated OR environment. The Predetermined Change Control Plan pathway may apply if you plan post-market algorithm updates.',
+        confidence: 'moderate',
+        citations: [
+          { id: 'vm-c4', label: 'FDA AI/ML guidance 2024', sourceType: 'web' },
+          { id: 'vm-c5', label: 'FDA cybersecurity guidance 2023', sourceType: 'web' },
+        ]
+      },
+    ],
+    provenance: [
+      { id: 'vm-p1', action: 'Searched FDA classification database for surgical AI', source: 'openFDA', duration: '1.6s', icon: 'database' },
+      { id: 'vm-p2', action: 'Retrieved recent 510(k) clearances for AI surgical tools', source: 'FDA database', duration: '2.4s', icon: 'search' },
+      { id: 'vm-p3', action: 'Identified relevant FDA guidance documents', source: 'FDA.gov', duration: '1.2s', icon: 'search' },
+    ],
+    totalDuration: '18 seconds',
+    followUps: [
+      'What clinical study design does FDA expect for surgical AI?',
+      'How do I write a Predetermined Change Control Plan?',
+      'What are the ISO 13485 requirements for software devices?',
+      'How long does a typical 510(k) review take?',
+    ]},
+  ],
+};
+
+taskConversations['vertical-therapeutics'] = {
+  taskId: 'vertical-therapeutics',
+  title: 'CDK4/6 inhibitor for HR+ breast cancer',
+  summary: 'CDK4/6 inhibitors are the standard of care for HR+/HER2- advanced breast cancer. The class is well-validated with 3 approved drugs (palbociclib, ribociclib, abemaciclib). Differentiation opportunities exist in resistance settings, earlier-stage disease, and combination strategies.',
+  messages: [
+    { id: 'vt-1', role: 'user', content: 'I am developing a next-generation CDK4/6 inhibitor. What is the current landscape?' },
+    { id: 'vt-2', role: 'system', content: 'Pulling approved compounds, clinical trial landscape, resistance mechanisms, and competitive positioning data.' },
+    { id: 'vt-3', role: 'assistant', content: '', sections: [
+      {
+        id: 'vt-s1', title: 'Approved CDK4/6 inhibitors',
+        content: 'Three approved CDK4/6 inhibitors dominate: palbociclib (Ibrance, Pfizer, 2015), ribociclib (Kisqali, Novartis, 2017), and abemaciclib (Verzenio, Lilly, 2017). Combined global sales exceeded $12B in 2025. Ribociclib recently showed overall survival benefit in the MONALEESA trials, shifting first-line preference.',
+        confidence: 'strong',
+        citations: [
+          { id: 'vt-c1', label: 'PMID 38291078 (MONALEESA-2 OS)', sourceType: 'pubmed' },
+          { id: 'vt-c2', label: 'ChEMBL: CDK4 inhibitors', sourceType: 'database' },
+        ]
+      },
+      {
+        id: 'vt-s2', title: 'Resistance and unmet need',
+        content: 'Nearly all patients develop resistance within 2-3 years. Key mechanisms: RB1 loss (30%), CDK6 amplification (15%), PI3K pathway activation (20%), and CCNE1 amplification (10%). No approved therapy specifically targets CDK4/6i-resistant disease. This is the primary whitespace for new entrants.',
+        confidence: 'moderate',
+        citations: [
+          { id: 'vt-c3', label: 'PMID 37892345', sourceType: 'pubmed' },
+          { id: 'vt-c4', label: 'PMID 38567123', sourceType: 'pubmed' },
+        ]
+      },
+      {
+        id: 'vt-s3', title: 'Competitive clinical pipeline',
+        content: '8 next-generation CDK inhibitors in clinical trials as of 2026. Dalpiciclib (Hengrui, Phase 3 in China), lerociclib (G1 Therapeutics, Phase 2), and several CDK2-selective inhibitors targeting the CCNE1 resistance mechanism. Your differentiation strategy should address: which resistance mechanism you overcome, whether you are CDK4-selective, and your therapeutic index versus existing drugs.',
+        confidence: 'moderate',
+        citations: [
+          { id: 'vt-c5', label: 'ClinicalTrials.gov: CDK inhibitors', sourceType: 'trial' },
+          { id: 'vt-c6', label: 'PMID 38901456', sourceType: 'pubmed' },
+        ]
+      },
+    ],
+    provenance: [
+      { id: 'vt-p1', action: 'Queried ChEMBL for CDK4/6 compound bioactivity', source: 'ChEMBL', duration: '1.3s', icon: 'database' },
+      { id: 'vt-p2', action: 'Searched ClinicalTrials.gov for CDK inhibitor trials', source: 'CT.gov API', duration: '1.9s', icon: 'search' },
+      { id: 'vt-p3', action: 'Searched PubMed for CDK4/6 resistance mechanisms', source: 'PubMed', duration: '2.4s', icon: 'search' },
+      { id: 'vt-p4', action: 'Queried Open Targets for CDK4 disease associations', source: 'Open Targets', duration: '0.9s', icon: 'database' },
+    ],
+    totalDuration: '21 seconds',
+    followUps: [
+      'Which CDK4/6i resistance mechanism is most common?',
+      'Compare selectivity profiles of the 3 approved drugs.',
+      'What preclinical models best predict CDK4/6i response?',
+      'Is there a biomarker to identify patients who will resist?',
+    ]},
+  ],
+};
