@@ -64,7 +64,7 @@ export function HomePage() {
         {mockSessions.map((session) => (
           <button
             key={session.id}
-            onClick={() => navigate('/research', { state: { sessionId: session.id } })}
+            onClick={() => navigate('/tasks', { state: { sessionId: session.id } })}
             className="w-full text-left px-4 py-3 bg-surface-elevated border border-border-subtle rounded-lg hover:border-cei-blue-light/30 hover:shadow-sm transition-all group"
           >
             <div className="flex items-start gap-3">
@@ -77,7 +77,7 @@ export function HomePage() {
                   <span className="text-[10px] text-text-tertiary">Updated {new Date(session.updatedAt).toLocaleDateString()}</span>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-text-tertiary group-hover:text-cei-blue-light mt-1 flex-shrink-0 transition-colors" />
+              <ArrowRight size={14} className="text-text-tertiary group-hover:text-cei-blue-light mt-1 shrink-0 transition-colors" />
             </div>
           </button>
         ))}

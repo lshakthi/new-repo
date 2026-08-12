@@ -5,7 +5,6 @@ import { AppShell } from './components/shell/AppShell';
 import { HomePage } from './pages/HomePage';
 import { HistoryPage } from './pages/HistoryPage';
 import { TaskLauncherPage } from './pages/TaskLauncherPage';
-import { ResearchPage } from './pages/ResearchPage';
 import { TargetAssessmentPage } from './pages/TargetAssessmentPage';
 import { VariantReportPage } from './pages/VariantReportPage';
 import { RegulatoryBriefPage } from './pages/RegulatoryBriefPage';
@@ -22,7 +21,6 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/tasks" element={<TaskLauncherPage />} />
-              <Route path="/research" element={<ResearchPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/target-assessment" element={<TargetAssessmentPage />} />
               <Route path="/variant-report" element={<VariantReportPage />} />

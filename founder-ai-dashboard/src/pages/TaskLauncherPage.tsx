@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useProductTour } from '../components/tour/ProductTour';
 import { mockTaskGroups } from '../mocks/tasks';
+import { taskConversations, defaultConversation } from '../mocks/conversations';
+import type { TaskConversation } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
+import { CitationChip, ConfidenceBadge, ProvenanceTrail } from '../design-system';
 import {
   FlaskConical, Target, Atom, Map, Eye, Package, Zap,
-  ArrowRight, Clock, ShieldAlert, Search
+  ArrowRight, Clock, ShieldAlert, Search, Send, User, Bot,
+  ChevronDown, ChevronRight, ArrowLeft
 } from 'lucide-react';
 
 const groupIcons: Record<string, typeof FlaskConical> = {
@@ -30,12 +34,31 @@ const businessTaskIds = new Set([
 ]);
 
 export function TaskLauncherPage() {
-  const { mode } = useApp();
+  const { mode, setEvidencePanelOpen, setActiveSourceId } = useApp();
   const { reportTourEvent, isOpen: tourIsOpen, stage: tourStage } = useProductTour();
-  const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const sessionTaskIds: Record<string, string> = {
+    'session-1': 'target-assessment',
+    'session-2': 'regulatory-planning',
+    'session-3': 'variant-interpretation',
+    'session-4': 'compound-discovery',
+  };
+  const routeState = location.state as { sessionId?: string; taskId?: string } | null;
+  const initialTask = routeState?.taskId
+    ?? (routeState?.sessionId ? sessionTaskIds[routeState.sessionId] : undefined)
+    ?? null;
+  const [activeTask, setActiveTask] = useState<string | null>(initialTask);
+  const [inputValue, setInputValue] = useState('');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const tourIsGuidingTask = tourIsOpen && ['task-query', 'task-group', 'task-select'].includes(tourStage);
+
+  // Get conversation for the selected task
+  const conversation: TaskConversation = activeTask
+    ? (taskConversations[activeTask] || defaultConversation)
+    : defaultConversation;
+  const messages = conversation.messages;
 
   const activeTaskIds = mode === ViewMode.SCIENCE ? scienceTaskIds : businessTaskIds;
   const visibleGroups = mockTaskGroups
@@ -63,9 +86,207 @@ export function TaskLauncherPage() {
 
   const handleTaskSelect = (taskId: string) => {
     reportTourEvent({ type: 'TASK_SELECTED', taskId });
-    navigate('/research', { state: { taskId } });
+    setActiveTask(taskId);
   };
 
+  const handleBack = () => {
+    setActiveTask(null);
+  };
+
+  const handleCitationClick = (id: string) => {
+    setActiveSourceId(id);
+    setEvidencePanelOpen(true);
+  };
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      setActiveTask('custom-query');
+      setInputValue('');
+    }
+  };
+
+  const toggleSection = (id: string) => {
+    const next = new Set(expandedSections);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpandedSections(next);
+  };
+
+  // ─── ACTIVE TASK: Show inline chat ───────────────────────────
+  if (activeTask) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Back button + session info */}
+        <div className="border-b border-border-subtle px-6 py-2.5 bg-surface-elevated flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-cei-blue transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back to tasks
+          </button>
+          <div className="h-4 w-px bg-border-subtle" />
+          <p className="text-sm font-medium text-text-primary">{conversation.title}</p>
+          <button className="ml-auto text-xs text-text-tertiary hover:text-text-secondary transition-colors">
+            Export
+          </button>
+        </div>
+
+        {/* Conversation */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {messages.map((msg) => (
+            <div key={msg.id}>
+              {/* User message */}
+              {msg.role === 'user' && (
+                <div className="flex items-start gap-3 max-w-2xl">
+                  <div className="w-6 h-6 rounded-full bg-cei-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <User size={12} className="text-cei-blue" />
+                  </div>
+                  <p className="text-sm text-text-primary leading-relaxed">{msg.content}</p>
+                </div>
+              )}
+
+              {/* Routing message */}
+              {msg.role === 'system' && (
+                <div className="ml-9 px-3 py-1.5 rounded-md bg-surface-panel inline-block">
+                  <p className="text-xs text-text-tertiary">{msg.content}</p>
+                </div>
+              )}
+
+              {/* Assistant response */}
+              {msg.role === 'assistant' && msg.sections && (
+                <div className="flex items-start gap-3 max-w-3xl">
+                  <div className="w-6 h-6 rounded-full bg-cei-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Bot size={12} className="text-white" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    {/* Plain summary */}
+                    <p className="text-sm text-text-primary leading-relaxed">
+                      {conversation.summary}
+                    </p>
+
+                    {/* Collapsible sections */}
+                    {msg.sections.map((section) => {
+                      const isExpanded = expandedSections.has(section.id);
+                      return (
+                        <div key={section.id} className="rounded-lg border border-border-subtle overflow-hidden">
+                          <button
+                            onClick={() => toggleSection(section.id)}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-surface-panel/50 transition-colors"
+                          >
+                            {isExpanded
+                              ? <ChevronDown size={14} className="text-text-tertiary flex-shrink-0" />
+                              : <ChevronRight size={14} className="text-text-tertiary flex-shrink-0" />
+                            }
+                            <span className="text-sm font-medium text-text-primary flex-1">{section.title}</span>
+                            <ConfidenceBadge level={section.confidence} size="sm" />
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-4 pb-3 pt-1 border-t border-border-subtle bg-surface-panel/20">
+                              <p className="text-sm text-text-secondary leading-relaxed">{section.content}</p>
+
+                              {section.citations && section.citations.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {section.citations.map((cit) => (
+                                    <CitationChip
+                                      key={cit.id}
+                                      id={cit.id}
+                                      label={cit.label}
+                                      sourceType={cit.sourceType}
+                                      onClick={handleCitationClick}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+
+                              {section.uncertainties && section.uncertainties.map((u, i) => (
+                                <p key={i} className="text-xs text-text-tertiary mt-2 italic">
+                                  Open question: {u.what} To resolve: {u.resolution}
+                                </p>
+                              ))}
+
+                              {section.conflict && (
+                                <div className="mt-2 p-2.5 rounded-md bg-evidence-conflict-bg/50 border border-evidence-conflict/10">
+                                  <p className="text-xs font-medium text-evidence-conflict mb-1">
+                                    Experts disagree: {section.conflict.topic}
+                                  </p>
+                                  {section.conflict.positions.map((pos, i) => (
+                                    <p key={i} className="text-xs text-text-secondary mt-1">
+                                      <span className="font-medium">{pos.position}:</span> {pos.summary}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Review notice */}
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-review-required-bg/50 border border-review-required/15">
+                      <span className="text-xs text-review-required font-medium">Note:</span>
+                      <span className="text-xs text-text-secondary">
+                        This is decision support. A qualified reviewer should check before acting on it.
+                      </span>
+                    </div>
+
+                    {/* Provenance */}
+                    {msg.provenance && (
+                      <ProvenanceTrail steps={msg.provenance} totalDuration={msg.totalDuration} />
+                    )}
+
+                    {/* Follow-ups */}
+                    {msg.followUps && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {msg.followUps.map((fu, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setInputValue(fu)}
+                            className="text-xs px-3 py-1.5 rounded-full border border-border-subtle text-text-secondary hover:border-cei-blue-light/40 hover:text-cei-blue transition-all"
+                          >
+                            {fu}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-border-subtle bg-surface-elevated px-6 py-4 flex-shrink-0">
+          <form onSubmit={handleSend} className="max-w-2xl mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Ask a follow-up question..."
+                className="w-full pl-4 pr-12 py-3 rounded-xl border border-border-subtle bg-surface-panel text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all"
+                aria-label="Ask a follow-up"
+              />
+              <button
+                type="submit"
+                disabled={!inputValue.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cei-blue text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-cei-navy transition-colors"
+                aria-label="Send"
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── TASK PICKER (default view) ──────────────────────────────
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       {/* Header */}
@@ -91,7 +312,7 @@ export function TaskLauncherPage() {
         {searchQuery && !tourIsGuidingTask && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
             <button
-              onClick={() => navigate('/research', { state: { query: searchQuery } })}
+              onClick={() => handleTaskSelect('custom-query')}
               className="px-3 py-1 rounded-lg bg-cei-blue text-white text-xs font-medium hover:bg-cei-navy transition-colors"
             >
               Just ask
@@ -205,7 +426,7 @@ export function TaskLauncherPage() {
           ].map((v) => (
             <button
               key={v.title}
-              onClick={() => navigate('/research', { state: { vertical: v.title.toLowerCase() } })}
+              onClick={() => handleTaskSelect('vertical-' + v.title.toLowerCase())}
               className="text-left px-4 py-3 rounded-lg border border-border-subtle bg-surface-elevated hover:border-cei-blue-light/30 hover:shadow-sm transition-all"
             >
               <p className="text-sm font-medium text-text-primary">{v.title}</p>

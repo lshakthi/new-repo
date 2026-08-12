@@ -7,8 +7,7 @@ export interface PlatformDestination {
 
 export const platformDestinations: PlatformDestination[] = [
   { label: 'Home', path: '/', description: 'Dashboard overview, quick actions, and recent chats.', keywords: ['dashboard', 'overview', 'recent'] },
-  { label: 'New Task', path: '/tasks', description: 'Start a guided science or business task.', keywords: ['create', 'science', 'business', 'workflow'] },
-  { label: 'Research', path: '/research', description: 'Open the conversational research workspace.', keywords: ['chat', 'question', 'evidence'] },
+  { label: 'New Task', path: '/tasks', description: 'Start a guided task or continue an evidence-backed conversation.', keywords: ['create', 'science', 'business', 'workflow', 'chat', 'question', 'evidence'] },
   { label: 'History', path: '/history', description: 'Find and reopen previous conversations.', keywords: ['chats', 'sessions', 'recent'] },
   { label: 'Settings', path: '/settings', description: 'Manage providers, data sources, and confidentiality.', keywords: ['configuration', 'providers', 'privacy', 'tour'] },
   { label: 'Target Assessment', path: '/target-assessment', description: 'Review a biological target evidence scorecard.', keywords: ['validation', 'science', 'evidence'] },

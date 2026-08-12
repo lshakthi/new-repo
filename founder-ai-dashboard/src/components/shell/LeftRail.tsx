@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, Compass, MessageSquare, Settings, PanelLeftClose, PanelLeft, Clock
+  Home, Compass, Settings, PanelLeftClose, PanelLeft, Clock
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useProductTour } from '../tour/ProductTour';
@@ -16,7 +16,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home, path: '/' },
   { id: 'tasks', label: 'New Task', icon: Compass, path: '/tasks' },
-  { id: 'research', label: 'Research', icon: MessageSquare, path: '/research' },
   { id: 'history', label: 'History', icon: Clock, path: '/history' },
 ];
 
@@ -87,7 +86,7 @@ export function LeftRail() {
             {mockSessions.slice(0, 3).map((session) => (
               <button
                 key={session.id}
-                onClick={() => navigate('/research', { state: { sessionId: session.id } })}
+                onClick={() => navigate('/tasks', { state: { sessionId: session.id } })}
                 className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors"
               >
                 {session.title}

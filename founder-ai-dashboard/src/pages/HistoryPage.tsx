@@ -18,7 +18,7 @@ export function HistoryPage() {
           return (
             <button
               key={conversation.id}
-              onClick={() => navigate('/research', { state: { sessionId: conversation.id } })}
+              onClick={() => navigate('/tasks', { state: { sessionId: conversation.id } })}
               className="w-full text-left p-5 rounded-xl border border-border-subtle bg-surface-elevated hover:border-cei-blue-light/40 hover:shadow-sm transition-all group"
             >
               <div className="flex items-start gap-4">
