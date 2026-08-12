@@ -1,32 +1,20 @@
-import { Circle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Circle, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
+import { useProductTour } from '../components/tour/ProductTour';
 
 export function SettingsPage() {
+  const { startTour } = useProductTour();
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-8">
-      <h1 className="text-xl font-semibold text-text-primary mb-6">Settings</h1>
-
-      {/* Profile */}
-      <section className="border border-border-subtle rounded-lg p-5 bg-surface-elevated mb-4">
-        <h2 className="text-sm font-semibold text-text-primary mb-4">Profile</h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <label className="text-xs text-text-tertiary">Name</label>
-            <p className="text-text-primary font-medium">Dr. Sarah Chen</p>
-          </div>
-          <div>
-            <label className="text-xs text-text-tertiary">Organization</label>
-            <p className="text-text-primary font-medium">NovaDx Therapeutics</p>
-          </div>
-          <div>
-            <label className="text-xs text-text-tertiary">Role</label>
-            <p className="text-text-primary font-medium">Founder and CEO</p>
-          </div>
-          <div>
-            <label className="text-xs text-text-tertiary">Vertical</label>
-            <p className="text-text-primary font-medium">Therapeutics</p>
-          </div>
+      <div data-tour="settings-overview" className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-text-primary">Settings</h1>
+          <p className="text-sm text-text-secondary mt-1">Manage platform connections, data sources, and privacy controls.</p>
         </div>
-      </section>
+        <button onClick={startTour} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border-default text-xs font-medium text-text-secondary hover:bg-surface-panel transition-colors shrink-0">
+          <RotateCcw size={13} /> Replay tour
+        </button>
+      </div>
 
       {/* AI Providers */}
       <section className="border border-border-subtle rounded-lg p-5 bg-surface-elevated mb-4">

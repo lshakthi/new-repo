@@ -94,18 +94,6 @@ export const mockTaskGroups: TaskGroup[] = [
         useCaseRefs: [17, 18, 19, 20, 21, 22, 25, 123],
         estimatedTime: '1 to 3 minutes',
       },
-      {
-        id: 'omics-analysis',
-        title: 'Analyze expression or omics data',
-        description: 'Reuse internal or public expression data to identify differential signals, cell types, trajectories, and patterns.',
-        examples: [
-          'Run differential expression on GEO series GSE12345.',
-          'What cell types are present in this single-cell dataset?',
-          'Compare gene expression across three GEO studies for my target.',
-        ],
-        useCaseRefs: [23, 24, 28, 96, 99, 100],
-        estimatedTime: '3 to 10 minutes',
-      },
     ],
   },
   {

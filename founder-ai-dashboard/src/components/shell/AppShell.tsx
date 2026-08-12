@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { TopBar } from './TopBar';
 import { LeftRail } from './LeftRail';
 import { EvidencePanel } from './EvidencePanel';
+import { ProductTour } from '../tour/ProductTour';
 
 export function AppShell() {
   return (
@@ -14,6 +15,7 @@ export function AppShell() {
         </main>
         <EvidencePanel />
       </div>
+      <ProductTour />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useProductTour } from '../components/tour/ProductTour';
 import { mockTaskGroups } from '../mocks/tasks';
 import { ViewMode } from '../design-system/tokens';
 import {
@@ -18,21 +19,31 @@ const groupIcons: Record<string, typeof FlaskConical> = {
   'cross-domain': Zap,
 };
 
+const scienceTaskIds = new Set([
+  'research-question', 'check-sequence', 'find-public-data', 'target-assessment',
+  'variant-interpretation', 'structure-prediction', 'compound-discovery', 'scientific-documents',
+]);
+
+const businessTaskIds = new Set([
+  'regulatory-planning', 'clinical-landscape', 'patent-fto', 'competitor-monitoring',
+  'investor-materials', 'end-to-end-pipeline',
+]);
+
 export function TaskLauncherPage() {
   const { mode } = useApp();
+  const { reportTourEvent, isOpen: tourIsOpen, stage: tourStage } = useProductTour();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const tourIsGuidingTask = tourIsOpen && ['task-query', 'task-group', 'task-select'].includes(tourStage);
 
-  // Sort task groups by mode priority
-  const sortedGroups = [...mockTaskGroups].sort((a, b) => {
-    const priorityKey = mode === ViewMode.SCIENCE ? 'sciencePriority' : 'businessPriority';
-    return a[priorityKey] - b[priorityKey];
-  });
+  const activeTaskIds = mode === ViewMode.SCIENCE ? scienceTaskIds : businessTaskIds;
+  const visibleGroups = mockTaskGroups
+    .map(group => ({ ...group, tasks: group.tasks.filter(task => activeTaskIds.has(task.id)) }))
+    .filter(group => group.tasks.length > 0);
 
-  // Filter by search
   const filteredGroups = searchQuery
-    ? sortedGroups.map(group => ({
+    ? visibleGroups.map(group => ({
         ...group,
         tasks: group.tasks.filter(task =>
           task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,19 +51,28 @@ export function TaskLauncherPage() {
           task.examples.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()))
         ),
       })).filter(group => group.tasks.length > 0)
-    : sortedGroups;
+    : visibleGroups;
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 3 || filteredGroups.length === 0) return;
+    const timer = window.setTimeout(() => {
+      reportTourEvent({ type: 'TASK_QUERY_ENTERED', query: searchQuery });
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [filteredGroups.length, reportTourEvent, searchQuery]);
 
   const handleTaskSelect = (taskId: string) => {
+    reportTourEvent({ type: 'TASK_SELECTED', taskId });
     navigate('/research', { state: { taskId } });
   };
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       {/* Header */}
-      <div className="mb-6">
+      <div data-tour="task-overview" className="mb-6">
         <h1 className="text-xl font-semibold text-text-primary">What do you want to accomplish?</h1>
         <p className="text-sm text-text-secondary mt-1">
-          Pick a task below, or describe what you need in your own words.
+          A task is a guided workflow that gives Founder AI a clear goal, relevant tools, and an expected output.
         </p>
       </div>
 
@@ -60,6 +80,7 @@ export function TaskLauncherPage() {
       <div className="relative mb-8">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary" />
         <input
+          data-tour="task-query"
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -67,7 +88,7 @@ export function TaskLauncherPage() {
           className="w-full pl-11 pr-4 py-3 rounded-xl border border-border-subtle bg-surface-elevated text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all shadow-sm"
           aria-label="Search tasks or describe your need"
         />
-        {searchQuery && (
+        {searchQuery && !tourIsGuidingTask && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
             <button
               onClick={() => navigate('/research', { state: { query: searchQuery } })}
@@ -98,7 +119,7 @@ export function TaskLauncherPage() {
 
       {/* Task groups */}
       <div className="space-y-4">
-        {filteredGroups.map((group) => {
+        {filteredGroups.map((group, groupIndex) => {
           const Icon = groupIcons[group.id] || FlaskConical;
           const isExpanded = expandedGroup === group.id;
 
@@ -106,7 +127,11 @@ export function TaskLauncherPage() {
             <div key={group.id} className="border border-border-subtle rounded-xl bg-surface-elevated overflow-hidden">
               {/* Group header */}
               <button
-                onClick={() => setExpandedGroup(isExpanded ? null : group.id)}
+                data-tour={groupIndex === 0 ? 'task-group' : undefined}
+                onClick={() => {
+                  if (!isExpanded) reportTourEvent({ type: 'TASK_GROUP_EXPANDED', groupId: group.id });
+                  setExpandedGroup(isExpanded ? null : group.id);
+                }}
                 className="w-full flex items-center gap-4 px-5 py-4 hover:bg-surface-panel/50 transition-colors text-left"
                 aria-expanded={isExpanded}
               >
@@ -124,9 +149,10 @@ export function TaskLauncherPage() {
               {/* Tasks */}
               {isExpanded && (
                 <div className="border-t border-border-subtle px-5 py-3 space-y-2 bg-surface-panel/30">
-                  {group.tasks.map((task) => (
+                  {group.tasks.map((task, taskIndex) => (
                     <button
                       key={task.id}
+                      data-tour={groupIndex === 0 && taskIndex === 0 ? 'task-card' : undefined}
                       onClick={() => handleTaskSelect(task.id)}
                       className="w-full text-left px-4 py-3 rounded-lg border border-border-subtle bg-surface-elevated hover:border-cei-blue-light/40 hover:shadow-sm transition-all group"
                     >
