@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A client-facing discussion document for the proposed biotech decision-support platform scope."
+    />
+    <title>Project Scope · Evidence to Decision</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Scope overview home"
+        ><span class="brand-mark">CEI</span><span>Project Scope</span></a
+      >
+      <nav aria-label="Presentation sections">
+        <a href="#scope" data-open-tab="current">Current scope</a
+        ><a href="#scope" data-open-tab="future">Future scope</a>
+      </nav>
+      <button class="print-button" type="button" data-print>
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path
+            d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"
+          /></svg
+        >Print scope
+      </button>
+    </header>
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Working draft</p>
+          <h1>Proposed project scope</h1>
+          <p class="lede">
+            A discussion document for the proposed biotech decision-support
+            platform.
+          </p>
+          <p class="hero-note">
+            Final scope, sequencing, and acceptance criteria remain to be agreed
+            with the client.
+          </p>
+        </div>
+        <aside class="scope-summary" aria-label="Scope summary">
+          <p class="summary-title">Scope split</p>
+          <div class="summary-row">
+            <span>Current scope</span><strong>4 reach goals</strong>
+          </div>
+          <div class="summary-row">
+            <span>Future scope</span><strong>1 stretch goal</strong>
+          </div>
+          <div class="summary-row">
+            <span>Status</span><strong>For discussion</strong>
+          </div>
+          <p class="summary-note">
+            Proposed planning boundary only. This does not represent completed
+            functionality or a final delivery commitment.
+          </p>
+        </aside>
+      </section>
+      <section class="scope-section" id="scope">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">Proposed product boundary</p>
+            <h2>Two sides of the roadmap</h2>
+          </div>
+          <p>
+            Build the evidence and delivery foundation first. Introduce
+            specialized computation only after the core workflow is stable,
+            measurable, and trusted.
+          </p>
+        </div>
+        <div class="scope-tabs" role="tablist" aria-label="Project scope views">
+          <button
+            class="scope-tab active"
+            id="tab-current"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-current"
+            data-tab="current"
+          >
+            <span>01</span><b>Current scope</b
+            ><small>Reach goals 1–4 · 10 API integrations</small>
+          </button>
+          <button
+            class="scope-tab"
+            id="tab-future"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-future"
+            data-tab="future"
+          >
+            <span>02</span><b>Future scope</b
+            ><small>Stretch goal · HealthOmics &amp; gated compute</small>
+          </button>
+        </div>
+        <div class="scope-board">
+          <div
+            class="scope-panel"
+            id="panel-current"
+            role="tabpanel"
+            aria-labelledby="tab-current"
+            data-panel="current"
+          >
+            <section class="scope-side now">
+              <header>
+                <div>
+                  <span class="scope-label"><i></i>In scope</span>
+                  <h3>Reach goals</h3>
+                  <p>
+                    The initial commitment: useful, source-aware workflows that
+                    support—not replace—expert judgment.
+                  </p>
+                </div>
+                <span class="count">01—04</span>
+              </header>
+              <div class="goal-list">
+                <article class="goal-card">
+                  <button
+                    class="goal-toggle"
+                    type="button"
+                    aria-expanded="true"
+                  >
+                    <span class="goal-number">01</span
+                    ><span class="goal-title"
+                      ><b>Look up & identify information</b
+                      ><small
+                        >Find a clear answer across approved sources.</small
+                      ></span
+                    ><span class="toggle-icon" aria-hidden="true"></span>
+                  </button>
+                  <div class="goal-detail">
+                    <p>
+                      Ask in plain language, compare sources, remove noise, and
+                      return a concise answer with evidence, dates, and explicit
+                      gaps.
+                    </p>
+                    <ul>
+                      <li>Search multiple approved sources</li>
+                      <li>Trace important claims to source records</li>
+                      <li>Surface disagreement and incomplete evidence</li>
+                    </ul>
+                    <div class="outcome">
+                      <b>Outcome</b
+                      ><span
+                        >A short, cited research brief with clear
+                        uncertainty.</span
+                      >
+                    </div>
+                  </div>
+                </article>
+                <article class="goal-card">
+                  <button
+                    class="goal-toggle"
+                    type="button"
+                    aria-expanded="false"
+                  >
+                    <span class="goal-number">02</span
+                    ><span class="goal-title"
+                      ><b>Draft a document</b
+                      ><small
+                        >Turn verified findings into a review-ready first
+                        draft.</small
+                      ></span
+                    ><span class="toggle-icon" aria-hidden="true"></span>
+                  </button>
+                  <div class="goal-detail" hidden>
+                    <p>
+                      Shape selected evidence for investors, partners, review
+                      teams, regulators, publications, or company leadership.
+                    </p>
+                    <ul>
+                      <li>Review the outline before drafting</li>
+                      <li>Label sourced facts, assumptions, and estimates</li>
+                      <li>Edit sections without rebuilding the document</li>
+                    </ul>
+                    <div class="outcome">
+                      <b>Outcome</b
+                      ><span
+                        >An audience-fit draft with citations and a pre-share
+                        review gate.</span
+                      >
+                    </div>
+                  </div>
+                </article>
+                <article class="goal-card">
+                  <button
+                    class="goal-toggle"
+                    type="button"
+                    aria-expanded="false"
+                  >
+                    <span class="goal-number">03</span
+                    ><span class="goal-title"
+                      ><b>Watch competitors & clear the runway</b
+                      ><small
+                        >Notice changes that could affect the plan.</small
+                      ></span
+                    ><span class="toggle-icon" aria-hidden="true"></span>
+                  </button>
+                  <div class="goal-detail" hidden>
+                    <p>
+                      Monitor selected companies, products, trials, rules,
+                      publications, filings, partnerships, and funding activity.
+                    </p>
+                    <ul>
+                      <li>Configurable targets and check frequency</li>
+                      <li>Urgent alerts plus weekly or monthly summaries</li>
+                      <li>Dated source links and change history</li>
+                    </ul>
+                    <div class="outcome">
+                      <b>Outcome</b
+                      ><span
+                        >A de-duplicated update explaining what changed and why
+                        it may matter.</span
+                      >
+                    </div>
+                  </div>
+                </article>
+                <article class="goal-card">
+                  <button
+                    class="goal-toggle"
+                    type="button"
+                    aria-expanded="false"
+                  >
+                    <span class="goal-number">04</span
+                    ><span class="goal-title"
+                      ><b>Connect the do-it-all pipeline</b
+                      ><small
+                        >Carry one goal through research, review, and
+                        delivery.</small
+                      ></span
+                    ><span class="toggle-icon" aria-hidden="true"></span>
+                  </button>
+                  <div class="goal-detail" hidden>
+                    <p>
+                      Link planning, evidence collection, verification,
+                      drafting, and review without losing the original question
+                      or source trail.
+                    </p>
+                    <ul>
+                      <li>Approve a simple plan before work begins</li>
+                      <li>Show complete, waiting, blocked, and failed steps</li>
+                      <li>
+                        Save sources, outputs, and review history together
+                      </li>
+                    </ul>
+                    <div class="outcome">
+                      <b>Outcome</b
+                      ><span
+                        >One decision package with risks, unanswered questions,
+                        and next steps.</span
+                      >
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+            <section class="api-overview" aria-labelledby="api-overview-title">
+              <div class="api-heading">
+                <div>
+                  <p class="kicker">Planned integrations</p>
+                  <h3 id="api-overview-title">APIs in the current scope</h3>
+                </div>
+                <p>
+                  Each API gives the platform access to a different kind of
+                  trusted public information.
+                </p>
+              </div>
+              <div class="api-grid">
+                <article>
+                  <span>01</span>
+                  <div>
+                    <h4>PubMed</h4>
+                    <p>Biomedical research citations and abstracts.</p>
+                  </div>
+                </article>
+                <article>
+                  <span>02</span>
+                  <div>
+                    <h4>ClinicalTrials.gov</h4>
+                    <p>
+                      Clinical study records, including status, sponsors,
+                      locations, and results.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>03</span>
+                  <div>
+                    <h4>bioRxiv</h4>
+                    <p>
+                      Life-science preprints, abstracts, versions, and
+                      publication links.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>04</span>
+                  <div>
+                    <h4>medRxiv</h4>
+                    <p>
+                      Health-science preprints, abstracts, versions, and
+                      publication links.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>05</span>
+                  <div>
+                    <h4>ChEMBL</h4>
+                    <p>
+                      Bioactive molecules and their tested effects on biological
+                      targets.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>06</span>
+                  <div>
+                    <h4>Open Targets</h4>
+                    <p>
+                      Evidence connecting drug targets with diseases, drugs,
+                      genetics, and safety.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>07</span>
+                  <div>
+                    <h4>CMS Coverage Database</h4>
+                    <p>
+                      National and local Medicare coverage policies and their
+                      history.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>08</span>
+                  <div>
+                    <h4>ICD-10</h4>
+                    <p>
+                      Standard classification codes and names for diseases and
+                      health conditions.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>09</span>
+                  <div>
+                    <h4>NPI Registry</h4>
+                    <p>
+                      Public identifiers, names, specialties, and locations for
+                      healthcare providers.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <span>10</span>
+                  <div>
+                    <h4>PubChem</h4>
+                    <p>
+                      Chemical structures, names, properties, biological
+                      activity, and safety information.
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+          <div
+            class="scope-panel"
+            id="panel-future"
+            role="tabpanel"
+            aria-labelledby="tab-future"
+            data-panel="future"
+            hidden
+          >
+            <section class="scope-side later">
+              <header>
+                <div>
+                  <span class="scope-label"><i></i>Future enhancements</span>
+                  <h3>Stretch goal</h3>
+                  <p>
+                    A deliberately gated expansion after the four reach goals
+                    are stable.
+                  </p>
+                </div>
+                <span class="count">05+</span>
+              </header>
+              <article class="future-card">
+                <div class="future-icon">
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path
+                      d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"
+                    />
+                    <circle cx="12" cy="12" r="5" />
+                  </svg>
+                </div>
+                <span class="stage">Not part of the initial commitment</span>
+                <h4>Predict, model & run large calculations</h4>
+                <p>
+                  Run a narrow set of approved, repeatable calculations on
+                  complex datasets—only with validated inputs, cost controls,
+                  and expert interpretation.
+                </p>
+                <div class="future-columns">
+                  <div>
+                    <b>A realistic first step</b>
+                    <ul>
+                      <li>Approved workflow templates</li>
+                      <li>Validated files and required inputs</li>
+                      <li>Limited, safe configuration options</li>
+                      <li>Time and cost estimate before launch</li>
+                      <li>Saved inputs, settings, and results</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <b>Entry criteria</b>
+                    <ul>
+                      <li>Known-result test data</li>
+                      <li>Expert-reviewed workflows and outputs</li>
+                      <li>Privacy, spend, and time controls</li>
+                      <li>Uncertainty and failure handling</li>
+                      <li>Stable reach-goal foundation</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="boundary">
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 3 2 20h20L12 3Z" />
+                    <path d="M12 9v5m0 3h.01" />
+                  </svg>
+                  <p>
+                    <b>Clear boundary</b>No arbitrary methods, unchecked
+                    uploads, clinical decisions, unsupported predictions, or
+                    unapproved expensive runs.
+                  </p>
+                </div>
+              </article>
+            </section>
+            <section
+              class="healthomics-slide"
+              aria-labelledby="healthomics-title"
+            >
+              <div class="healthomics-heading">
+                <div>
+                  <p class="kicker">Potential managed workflow integration</p>
+                  <h3 id="healthomics-title">AWS HealthOmics</h3>
+                </div>
+                <span class="stage">Future scope</span>
+              </div>
+              <p class="healthomics-intro">
+                HealthOmics could provide the managed compute and workflow layer
+                for approved bioinformatics analyses. It can run custom WDL,
+                Nextflow, and CWL workflows while managing infrastructure,
+                files, retries, monitoring, and run history.
+              </p>
+              <div class="healthomics-grid">
+                <div>
+                  <h4>How it could support protein work</h4>
+                  <ul>
+                    <li>
+                      Run sequence checks, alignments, annotation, domain,
+                      motif, and variant-effect workflows.
+                    </li>
+                    <li>
+                      Run selected containerized tools for protein structure,
+                      folding, interaction, and property analysis.
+                    </li>
+                    <li>
+                      Compare candidate sequences and rank hypothetical protein
+                      designs or synthesis plans for expert review.
+                    </li>
+                    <li>
+                      Scale approved analyses without the team manually managing
+                      compute infrastructure.
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>How it would be introduced safely</h4>
+                  <ul>
+                    <li>
+                      Start with a small set of validated workflow templates.
+                    </li>
+                    <li>
+                      Version tools, containers, parameters, inputs, and
+                      outputs.
+                    </li>
+                    <li>
+                      Show estimated cost and require approval before each run.
+                    </li>
+                    <li>
+                      Preserve logs and provenance for repeatability and review.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="healthomics-boundary">
+                <strong>Important boundary</strong>
+                <p>
+                  HealthOmics runs the selected computational workflows; it does
+                  not supply every scientific method or physically synthesize a
+                  protein. Candidate designs and synthesis plans would remain
+                  hypotheses until reviewed by experts and validated in a lab.
+                </p>
+              </div>
+              <a
+                class="slide-source"
+                href="https://aws.amazon.com/healthomics/features/"
+                target="_blank"
+                rel="noreferrer"
+                >Platform reference: AWS HealthOmics features</a
+              >
+            </section>
+          </div>
+        </div>
+      </section>
+      <section class="standards" id="standards" data-current-only>
+        <div class="section-heading light">
+          <div>
+            <p class="kicker">Definition of trustworthy</p>
+            <h2>Standards across every goal</h2>
+          </div>
+          <p>
+            These are product requirements—not optional disclaimers added at the
+            end.
+          </p>
+        </div>
+        <div class="standard-grid">
+          <article>
+            <span>01</span
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <path
+                d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+              />
+              <path
+                d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+              />
+            </svg>
+            <h3>Sources</h3>
+            <p>
+              Every major claim links to its record, date, and version where
+              available.
+            </p>
+          </article>
+          <article>
+            <span>02</span
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="m3 17 6-6 4 4 8-8" />
+              <path d="M14 7h7v7" />
+            </svg>
+            <h3>Confidence</h3>
+            <p>
+              Strength, conflict, missing data, and failure states remain
+              visible.
+            </p>
+          </article>
+          <article>
+            <span>03</span
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+              <path d="M12 16v-4m0-4h.01" />
+            </svg>
+            <h3>Assumptions</h3>
+            <p>Estimates and unknowns stay separate from verified facts.</p>
+          </article>
+          <article>
+            <span>04</span
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="m17 11 2 2 4-4" />
+            </svg>
+            <h3>Human review</h3>
+            <p>High-impact and external outputs require qualified approval.</p>
+          </article>
+          <article>
+            <span>05</span
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M3 3v18h18" />
+              <path d="m7 16 4-5 4 3 5-7" />
+            </svg>
+            <h3>Provenance</h3>
+            <p>
+              Inputs, tools, steps, outputs, and review history remain
+              auditable.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section class="sequence" data-current-only>
+        <div>
+          <p class="kicker">Recommended sequence</p>
+          <h2>Earn complexity in stages.</h2>
+        </div>
+        <ol>
+          <li class="active">
+            <span>1</span><b>Evidence lookup</b
+            ><small>Build the source foundation</small>
+          </li>
+          <li>
+            <span>2</span><b>Document drafting</b
+            ><small>Use verified findings</small>
+          </li>
+          <li>
+            <span>3</span><b>Monitoring</b><small>Track important change</small>
+          </li>
+          <li>
+            <span>4</span><b>Connected pipeline</b
+            ><small>Unify the workflow</small>
+          </li>
+          <li class="future-step">
+            <span>5</span><b>Approved compute</b
+            ><small>Expand only when ready</small>
+          </li>
+        </ol>
+      </section>
+    </main>
+    <footer>
+      <div>
+        <span class="brand-mark">CEI</span>
+        <p>
+          <b>Project Scope</b><small>Prepared for collaborative review</small>
+        </p>
+      </div>
+      <p>Source basis: Context/notes.md · Reach Goals 1–4 + Stretch Goal 5</p>
+      <a href="#top">Back to top ↑</a>
+    </footer>
+  </body>
+</html>
