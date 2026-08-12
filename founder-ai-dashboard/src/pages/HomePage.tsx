@@ -25,14 +25,14 @@ export function HomePage() {
 
   const quickActions = mode === ViewMode.SCIENCE
     ? [
-        { label: 'Research a question', path: '/chat', icon: FlaskConical },
-        { label: 'Check a sequence', path: '/chat', icon: FileText },
-        { label: 'Validate a target', path: '/chat', icon: Sparkles },
+        { label: 'Research a question', path: '/tasks', icon: FlaskConical },
+        { label: 'Check a sequence', path: '/tasks', icon: FileText },
+        { label: 'Validate a target', path: '/tasks', icon: Sparkles },
       ]
     : [
-        { label: 'Regulatory pathway', path: '/chat', icon: Briefcase },
-        { label: 'Patent landscape', path: '/chat', icon: FileText },
-        { label: 'Market sizing', path: '/chat', icon: Sparkles },
+        { label: 'Regulatory pathway', path: '/tasks', icon: Briefcase },
+        { label: 'Patent landscape', path: '/tasks', icon: FileText },
+        { label: 'Market sizing', path: '/tasks', icon: Sparkles },
       ];
 
   return (
@@ -86,7 +86,7 @@ export function HomePage() {
             {mockSessions.map((session) => (
               <button
                 key={session.id}
-                onClick={() => navigate('/chat', { state: { sessionId: session.id } })}
+                onClick={() => navigate('/tasks', { state: { sessionId: session.id } })}
                 className="w-full text-left px-4 py-3 bg-surface-elevated border border-border-subtle rounded-lg hover:border-cei-blue-light/30 hover:shadow-sm transition-all group"
               >
                 <div className="flex items-start gap-3">

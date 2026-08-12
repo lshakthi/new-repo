@@ -13,7 +13,7 @@ export function TopBar() {
   const handleAsk = (e: React.FormEvent) => {
     e.preventDefault();
     if (askValue.trim()) {
-      navigate('/chat', { state: { query: askValue.trim() } });
+      navigate('/tasks', { state: { query: askValue.trim() } });
       setAskValue('');
     }
   };

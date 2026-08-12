@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AppShell } from './components/shell/AppShell';
 import { HomePage } from './pages/HomePage';
-import { ChatPage } from './pages/ChatPage';
+import { TaskLauncherPage } from './pages/TaskLauncherPage';
 import { TargetAssessmentPage } from './pages/TargetAssessmentPage';
 import { VariantReportPage } from './pages/VariantReportPage';
 import { RegulatoryBriefPage } from './pages/RegulatoryBriefPage';
@@ -21,7 +21,7 @@ function App() {
           {/* Main app with shell */}
           <Route element={<AppShell />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/tasks" element={<TaskLauncherPage />} />
             <Route path="/target-assessment" element={<TargetAssessmentPage />} />
             <Route path="/variant-report" element={<VariantReportPage />} />
             <Route path="/regulatory" element={<RegulatoryBriefPage />} />
@@ -49,7 +49,7 @@ function PlaceholderPage({ title }: { title: string }) {
       <div className="mt-6 grid gap-3">
         {[
           { path: '/', label: 'Home Dashboard' },
-          { path: '/chat', label: 'Chat (New Task + Research)' },
+          { path: '/tasks', label: 'New Task' },
           { path: '/target-assessment', label: 'Target Assessment Output' },
           { path: '/variant-report', label: 'Variant Evidence Report' },
           { path: '/regulatory', label: 'Regulatory Brief' },
