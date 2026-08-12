@@ -50,6 +50,15 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'rq-s1', title: 'Overall off-target profile',
           content: 'Cytosine and adenine base editors (CBEs and ABEs) show substantially lower genome-wide off-target editing compared to traditional Cas9 nucleases. ABEs in particular have very few detectable DNA off-target sites. However, CBEs can cause guide-independent off-target C-to-U editing in both DNA and RNA.',
           confidence: 'strong',
+          tableData: {
+            headers: ['Editor Type', 'DNA off-targets', 'RNA off-targets', 'Bystander edits', 'Clinical stage'],
+            rows: [
+              ['ABE8e (adenine)', 'Very low', 'Minimal', 'Narrow window', 'Phase 1/2'],
+              ['BE4max (cytosine)', 'Low', 'Moderate (APOBEC)', 'Wider window', 'Phase 1'],
+              ['CBE-SECURE', 'Low', 'Very low', 'Standard', 'Preclinical'],
+              ['Cas9 nuclease', 'Moderate', 'None', 'N/A (DSB)', 'Approved (sickle cell)'],
+            ]
+          },
           citations: [
             { id: 'rq-c1', label: 'PMID 37829104', sourceType: 'pubmed' },
             { id: 'rq-c2', label: 'Nature Biotech 2024 review', sourceType: 'pubmed' },
@@ -59,6 +68,14 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'rq-s2', title: 'Bystander editing within the window',
           content: 'The main specificity concern is bystander editing: unintended changes to other bases within the ~5 nucleotide editing window. This is particularly relevant for therapeutic applications where only one specific base should change. Newer "precision" editors like ABE8e-V106W narrow the window significantly.',
           confidence: 'moderate',
+          chartData: [
+            { name: 'ABE8e', value: 2.1 },
+            { name: 'ABE8e-V106W', value: 0.8 },
+            { name: 'BE4max', value: 4.7 },
+            { name: 'BE4-SECURE', value: 1.9 },
+            { name: 'Cas9 (indels)', value: 8.3 },
+          ],
+          chartType: 'bar' as const,
           citations: [
             { id: 'rq-c3', label: 'PMID 38291056', sourceType: 'pubmed' },
             { id: 'rq-c4', label: 'PMID 37654890', sourceType: 'preprint' },
@@ -68,6 +85,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'rq-s3', title: 'RNA off-target effects',
           content: 'Some CBE variants (particularly those using APOBEC1 deaminase) cause transcriptome-wide C-to-U RNA editing. Engineered variants like YE1 and SECURE-BE4 have dramatically reduced this, but it remains an area to characterize for any new editor before clinical use.',
           confidence: 'moderate',
+          metrics: [
+            { label: 'RNA edits (APOBEC1)', value: '~10,000' },
+            { label: 'RNA edits (YE1)', value: '~300' },
+            { label: 'RNA edits (SECURE)', value: '<50' },
+            { label: 'ABE RNA edits', value: '~20' },
+          ],
           citations: [
             { id: 'rq-c5', label: 'PMID 36982234', sourceType: 'pubmed' },
           ]
@@ -99,6 +122,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'cs-s1', title: 'Sequence type and identity',
           content: 'This is a DNA sequence, 1,247 base pairs. BLAST alignment identifies it as human hemoglobin subunit beta (HBB), matching NM_000518.5 with 99.8% identity. The 0.2% difference is a single nucleotide at position 364.',
           confidence: 'strong',
+          metrics: [
+            { label: 'Length', value: '1,247 bp' },
+            { label: 'Type', value: 'DNA' },
+            { label: 'Identity', value: '99.8%' },
+            { label: 'Top hit', value: 'HBB' },
+          ],
           citations: [
             { id: 'cs-c1', label: 'NCBI BLAST hit', sourceType: 'database' },
             { id: 'cs-c2', label: 'RefSeq NM_000518.5', sourceType: 'database' },
@@ -108,6 +137,13 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'cs-s2', title: 'Quality metrics',
           content: 'GC content: 52.3% (normal for human coding sequence). No homopolymer runs longer than 5 bases. No unexpected stop codons in the primary reading frame. The sequence translates cleanly to a 147 amino acid protein matching hemoglobin beta.',
           confidence: 'strong',
+          chartData: [
+            { name: 'A', value: 28.1 },
+            { name: 'T', value: 19.6 },
+            { name: 'G', value: 26.4 },
+            { name: 'C', value: 25.9 },
+          ],
+          chartType: 'bar' as const,
           citations: [
             { id: 'cs-c3', label: 'UniProt P68871 (HBB_HUMAN)', sourceType: 'database' },
           ]
@@ -212,6 +248,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'vi-s1', title: 'Clinical classification',
           content: 'Pathogenic in ClinVar with review status "reviewed by expert panel." This is a frameshift deletion that introduces a premature termination codon at position 1982 of the protein, resulting in loss of the critical DNA-binding domain.',
           confidence: 'strong',
+          metrics: [
+            { label: 'Classification', value: 'Pathogenic' },
+            { label: 'Review status', value: 'Expert panel' },
+            { label: 'Variant type', value: 'Frameshift' },
+            { label: 'Protein effect', value: 'Truncation' },
+          ],
           citations: [
             { id: 'vi-c1', label: 'ClinVar VCV000051088', sourceType: 'database' },
             { id: 'vi-c2', label: 'ENIGMA classification', sourceType: 'database' },
@@ -221,6 +263,16 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'vi-s2', title: 'Population frequency',
           content: 'Extremely rare in general population. gnomAD allele frequency: 0.000008 (2 alleles in 251,398). Consistent with a high-penetrance disease-causing variant, not a benign polymorphism.',
           confidence: 'strong',
+          tableData: {
+            headers: ['Population', 'Allele count', 'Allele number', 'Frequency'],
+            rows: [
+              ['Global', '2', '251,398', '0.000008'],
+              ['European', '2', '128,404', '0.000016'],
+              ['African', '0', '41,234', '0'],
+              ['East Asian', '0', '34,892', '0'],
+              ['South Asian', '0', '30,456', '0'],
+            ]
+          },
           citations: [
             { id: 'vi-c3', label: 'gnomAD v4.1', sourceType: 'database' },
           ]
@@ -229,6 +281,13 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'vi-s3', title: 'Clinical significance',
           content: 'Carriers have significantly elevated lifetime risk for breast cancer (45-65%) and ovarian cancer (15-25%). Eligible for PARP inhibitor therapy (olaparib) if diagnosed with HER2-negative breast cancer or ovarian cancer. Qualifies for enhanced screening protocols.',
           confidence: 'strong',
+          chartData: [
+            { name: 'Breast (carrier)', value: 55 },
+            { name: 'Breast (general)', value: 12 },
+            { name: 'Ovarian (carrier)', value: 20 },
+            { name: 'Ovarian (general)', value: 1.2 },
+          ],
+          chartType: 'bar' as const,
           citations: [
             { id: 'vi-c4', label: 'NCCN Guidelines v3.2026', sourceType: 'web' },
             { id: 'vi-c5', label: 'PMID 37291045', sourceType: 'pubmed' },
@@ -261,6 +320,12 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'rp-s1', title: 'Recommended pathway',
           content: 'A 510(k) is the most appropriate pathway. Multiple AI-assisted pathology devices have been cleared via 510(k) under product code QKQ (digital pathology software). FDA has established expectations through recent clearances of Paige Prostate, PathAI, and similar products.',
           confidence: 'strong',
+          metrics: [
+            { label: 'Recommended', value: '510(k)' },
+            { label: 'Product code', value: 'QKQ' },
+            { label: 'Similar clearances', value: '14' },
+            { label: 'Avg review time', value: '90 days' },
+          ],
           citations: [
             { id: 'rp-c1', label: 'FDA product code QKQ', sourceType: 'database' },
             { id: 'rp-c2', label: 'K210785 (Paige Prostate)', sourceType: 'database' },
@@ -270,6 +335,15 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'rp-s2', title: 'Predicate devices',
           content: 'Three strong predicates identified: Paige Prostate (K210785), PathPresenter (K201610), and Philips IntelliSite (K200990). All cleared for whole-slide imaging with AI-assisted analysis. Your predicate choice depends on your specific intended use claim.',
           confidence: 'strong',
+          tableData: {
+            headers: ['Device', '510(k) Number', 'Sponsor', 'Year', 'Indication'],
+            rows: [
+              ['Paige Prostate', 'K210785', 'Paige.AI', '2021', 'Prostate cancer detection'],
+              ['PathPresenter', 'K201610', 'PathPresenter', '2021', 'WSI with AI assist'],
+              ['IntelliSite', 'K200990', 'Philips', '2020', 'Primary diagnosis WSI'],
+              ['NanoZoomer', 'K193421', 'Hamamatsu', '2020', 'Slide scanning + review'],
+            ]
+          },
           citations: [
             { id: 'rp-c3', label: 'FDA 510(k) database', sourceType: 'database' },
           ]
@@ -429,6 +503,20 @@ export const taskConversations: Record<string, TaskConversation> = {
           id: 'pf-s1', title: 'Filing volume and trend',
           content: '412 patent applications mentioning antibody-drug conjugates filed 2023-2026. Filing rate increased 34% year-over-year. Top assignees: Daiichi Sankyo (28 filings), AstraZeneca (22), Pfizer (19), Seagen/acquired by Pfizer (17), and numerous Chinese biotech firms collectively (89 filings).',
           confidence: 'moderate',
+          metrics: [
+            { label: 'Total filings', value: '412' },
+            { label: 'YoY growth', value: '+34%' },
+            { label: 'Top filer', value: 'Daiichi Sankyo' },
+            { label: 'China share', value: '22%' },
+          ],
+          chartData: [
+            { name: 'Daiichi Sankyo', value: 28 },
+            { name: 'AstraZeneca', value: 22 },
+            { name: 'Pfizer/Seagen', value: 36 },
+            { name: 'Chinese biotechs', value: 89 },
+            { name: 'Others', value: 237 },
+          ],
+          chartType: 'bar' as const,
           citations: [
             { id: 'pf-c1', label: 'PatentsView search results', sourceType: 'patent' },
           ]
