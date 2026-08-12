@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, Compass, MessageSquare, BookMarked, Bell, FolderOpen,
+  Home, MessageSquare, BookMarked, Bell, FolderOpen,
   Settings, PanelLeftClose, PanelLeft, Clock
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -15,8 +15,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home, path: '/' },
-  { id: 'tasks', label: 'New Task', icon: Compass, path: '/tasks' },
-  { id: 'research', label: 'Research', icon: MessageSquare, path: '/research' },
+  { id: 'chat', label: 'New Chat', icon: MessageSquare, path: '/chat' },
   { id: 'history', label: 'History', icon: Clock, path: '/history' },
   { id: 'library', label: 'Library', icon: BookMarked, path: '/library' },
   { id: 'watchlist', label: 'Watchlist', icon: Bell, path: '/watchlist', badge: 3 },
@@ -98,13 +97,13 @@ export function LeftRail() {
         <div className="px-3 py-2 border-t border-border-subtle">
           <p className="text-[10px] uppercase tracking-wider text-text-tertiary font-semibold mb-2">Recent</p>
           <div className="space-y-1">
-            <button className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
+            <button onClick={() => navigate('/chat')} className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
               TP53 target validation
             </button>
-            <button className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
+            <button onClick={() => navigate('/chat')} className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
               510(k) pathway triage
             </button>
-            <button className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
+            <button onClick={() => navigate('/chat')} className="w-full text-left text-xs text-text-secondary hover:text-text-primary truncate py-1 px-1 rounded hover:bg-surface-panel transition-colors">
               BRAF V600E variant report
             </button>
           </div>
