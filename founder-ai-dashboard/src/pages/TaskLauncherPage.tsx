@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { mockTaskGroups } from '../mocks/tasks';
-import { mockResearchConversation } from '../mocks/research';
+import { taskConversations, defaultConversation } from '../mocks/conversations';
+import type { TaskConversation } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
 import { CitationChip, ConfidenceBadge, ProvenanceTrail } from '../design-system';
 import {
@@ -28,7 +29,11 @@ export function TaskLauncherPage() {
   const [inputValue, setInputValue] = useState('');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
-  const messages = mockResearchConversation;
+  // Get conversation for the selected task
+  const conversation: TaskConversation = activeTask
+    ? (taskConversations[activeTask] || defaultConversation)
+    : defaultConversation;
+  const messages = conversation.messages;
 
   // Sort task groups by mode priority
   const sortedGroups = [...mockTaskGroups].sort((a, b) => {
@@ -90,7 +95,7 @@ export function TaskLauncherPage() {
             Back to tasks
           </button>
           <div className="h-4 w-px bg-border-subtle" />
-          <p className="text-sm font-medium text-text-primary">TP53 R175H target validation</p>
+          <p className="text-sm font-medium text-text-primary">{conversation.title}</p>
           <button className="ml-auto text-xs text-text-tertiary hover:text-text-secondary transition-colors">
             Export
           </button>
@@ -126,7 +131,7 @@ export function TaskLauncherPage() {
                   <div className="flex-1 space-y-3">
                     {/* Plain summary */}
                     <p className="text-sm text-text-primary leading-relaxed">
-                      Here is what I found about TP53 R175H as a therapeutic target. The variant is well-characterized as pathogenic with strong evidence, but whether it can be effectively targeted by small molecules remains debated.
+                      {conversation.summary}
                     </p>
 
                     {/* Collapsible sections */}
