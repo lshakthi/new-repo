@@ -10,6 +10,7 @@ import { VariantReportPage } from './pages/VariantReportPage';
 import { RegulatoryBriefPage } from './pages/RegulatoryBriefPage';
 import { PipelinePage } from './pages/PipelinePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ToolsPage } from './pages/ToolsPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/tasks" element={<TaskLauncherPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/tools" element={<ToolsPage />} />
               <Route path="/target-assessment" element={<TargetAssessmentPage />} />
               <Route path="/variant-report" element={<VariantReportPage />} />
               <Route path="/regulatory" element={<RegulatoryBriefPage />} />

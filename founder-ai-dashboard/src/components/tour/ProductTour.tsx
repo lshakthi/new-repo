@@ -20,6 +20,11 @@ type TourStage =
   | 'task-select'
   | 'history'
   | 'history-overview'
+  | 'tools'
+  | 'tools-overview'
+  | 'tools-source'
+  | 'tools-run'
+  | 'tools-results'
   | 'settings'
   | 'settings-overview'
   | 'complete';
@@ -29,7 +34,9 @@ export type ProductTourEvent =
   | { type: 'MODE_SELECTED'; mode: ViewModeType }
   | { type: 'TASK_QUERY_ENTERED'; query: string }
   | { type: 'TASK_GROUP_EXPANDED'; groupId: string }
-  | { type: 'TASK_SELECTED'; taskId: string };
+  | { type: 'TASK_SELECTED'; taskId: string }
+  | { type: 'TOOL_SOURCE_SELECTED'; id: string }
+  | { type: 'TOOLS_RUN_COMPLETED' };
 
 interface TourStep {
   selector: string | null;
@@ -117,7 +124,9 @@ export function ProductTourProvider({ children }: { children: ReactNode }) {
       setModeAtStepStart(mode);
       advanceTo('mode');
     }
-    if (stage === 'history-overview') advanceTo('settings');
+    if (stage === 'history-overview') advanceTo('tools');
+    if (stage === 'tools-overview') advanceTo('tools-source');
+    if (stage === 'tools-results') advanceTo('settings');
     if (stage === 'settings-overview') advanceTo('complete');
     if (stage === 'complete') setIsOpen(false);
   }, [advanceTo, isTransitioning, mode, stage]);
@@ -130,6 +139,7 @@ export function ProductTourProvider({ children }: { children: ReactNode }) {
         stage === 'home' && event.id === 'home' ? { path: '/', next: 'new-task' as TourStage } :
         stage === 'new-task' && event.id === 'tasks' ? { path: '/tasks', next: 'task-overview' as TourStage } :
         stage === 'history' && event.id === 'history' ? { path: '/history', next: 'history-overview' as TourStage } :
+        stage === 'tools' && event.id === 'tools' ? { path: '/tools', next: 'tools-overview' as TourStage } :
         stage === 'settings' && event.id === 'settings' ? { path: '/settings', next: 'settings-overview' as TourStage } : null;
       if (expectedNavigation) setPendingNavigation(expectedNavigation);
       return;
@@ -149,6 +159,14 @@ export function ProductTourProvider({ children }: { children: ReactNode }) {
     }
     if (stage === 'task-select' && event.type === 'TASK_SELECTED') {
       advanceTo('history');
+      return;
+    }
+    if (stage === 'tools-source' && event.type === 'TOOL_SOURCE_SELECTED') {
+      advanceTo('tools-run');
+      return;
+    }
+    if (stage === 'tools-run' && event.type === 'TOOLS_RUN_COMPLETED') {
+      advanceTo('tools-results');
     }
   }, [advanceTo, isOpen, isTransitioning, modeAtStepStart, stage]);
 
@@ -244,27 +262,65 @@ function getTourStep(stage: TourStage, mode: ViewModeType): TourStep {
       kind: 'info',
       progress: 4,
     },
+    tools: {
+      selector: '[data-tour="nav-tools"]',
+      title: 'Query approved sources in Tools',
+      body: 'Tools turns plain-language questions into source-specific database parameters. Open it using the highlighted tab.',
+      instruction: 'Click Tools',
+      kind: 'action',
+      progress: 5,
+    },
+    'tools-overview': {
+      selector: '[data-tour="tools-overview"]',
+      title: 'Start with a connected source',
+      body: 'Configured APIs are active; unavailable integrations stay visible but disabled until they are connected in Settings.',
+      kind: 'info',
+      progress: 5,
+    },
+    'tools-source': {
+      selector: '[data-tour="tools-source"]',
+      title: 'Choose an API chicklet',
+      body: 'Each chicklet uses the provider’s official mark and summarizes the data it contains. Open the configured ClinicalTrials.gov tool.',
+      instruction: 'Click ClinicalTrials.gov',
+      kind: 'action',
+      progress: 5,
+    },
+    'tools-run': {
+      selector: '[data-tour="tools-run"]',
+      title: 'Run the prepared example',
+      body: 'The ClinicalTrials.gov example is ready. Run it to see how natural language becomes structured parameters and traceable records.',
+      instruction: 'Click Run search and wait for the results',
+      kind: 'action',
+      progress: 5,
+    },
+    'tools-results': {
+      selector: '[data-tour="tools-results"]',
+      title: 'Review interpretation and provenance',
+      body: 'Before relying on results, inspect the generated parameters, source limitations, match rationale, stable identifiers, and execution trail.',
+      kind: 'info',
+      progress: 5,
+    },
     settings: {
       selector: '[data-tour="nav-settings"]',
       title: 'Finish in Settings',
       body: 'Settings is where platform connections, data sources, privacy controls, and this tutorial are managed.',
       instruction: 'Click Settings',
       kind: 'action',
-      progress: 5,
+      progress: 6,
     },
     'settings-overview': {
       selector: '[data-tour="settings-overview"]',
       title: 'Make the workspace yours',
       body: 'Configure providers and data handling here. You can replay this walkthrough at any time with the Replay tour button.',
       kind: 'info',
-      progress: 5,
+      progress: 6,
     },
     complete: {
       selector: null,
       title: 'You are ready to explore',
-      body: 'You navigated the workspace, compared task modes, started a real workflow, and found your history and settings.',
+      body: 'You navigated the workspace, started a guided workflow, searched an approved source, and reviewed result provenance.',
       kind: 'complete',
-      progress: 5,
+      progress: 6,
     },
   };
   return steps[stage];
@@ -361,7 +417,7 @@ export function ProductTour() {
     right: Math.min(window.innerWidth, targetRect.right + padding),
     bottom: Math.min(window.innerHeight, targetRect.bottom + padding),
   } : null;
-  const progressLabels = ['Home', 'New Task', 'Modes', 'Create', 'History', 'Settings'];
+  const progressLabels = ['Home', 'New Task', 'Modes', 'Create', 'History', 'Tools', 'Settings'];
 
   return createPortal(
     <div className="fixed inset-0 z-100 pointer-events-none" aria-live="polite">
