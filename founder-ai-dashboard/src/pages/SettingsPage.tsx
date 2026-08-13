@@ -1,5 +1,6 @@
 import { Circle, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useProductTour } from '../components/tour/ProductTour';
+import { configuredToolSourceIds, toolSources } from '../mocks/tools';
 
 export function SettingsPage() {
   const { startTour } = useProductTour();
@@ -47,25 +48,24 @@ export function SettingsPage() {
       <section className="border border-border-subtle rounded-lg p-5 bg-surface-elevated mb-4">
         <h2 className="text-sm font-semibold text-text-primary mb-4">Data source connections</h2>
         <div className="space-y-2">
-          {[
-            { name: 'PubMed / NCBI E-utilities', status: 'healthy' },
-            { name: 'ClinVar', status: 'healthy' },
-            { name: 'gnomAD', status: 'healthy' },
-            { name: 'ClinicalTrials.gov', status: 'healthy' },
-            { name: 'ChEMBL', status: 'healthy' },
-            { name: 'Open Targets', status: 'healthy' },
-            { name: 'Ensembl REST API', status: 'healthy' },
-            { name: 'STRING', status: 'degraded' },
-            { name: 'PatentsView', status: 'degraded' },
-          ].map((s) => (
-            <div key={s.name} className="flex items-center justify-between py-1.5">
-              <span className="text-sm text-text-primary">{s.name}</span>
-              <span className={`flex items-center gap-1 text-xs ${s.status === 'healthy' ? 'text-success' : 'text-evidence-moderate'}`}>
-                <Circle size={6} className={s.status === 'healthy' ? 'fill-success' : 'fill-evidence-moderate'} />
-                {s.status === 'healthy' ? 'Connected' : 'Slow response'}
-              </span>
-            </div>
-          ))}
+          {toolSources.map((source) => {
+            const configured = configuredToolSourceIds.includes(source.id);
+            return (
+              <div key={source.id} className="flex items-center justify-between gap-4 py-1.5">
+                <div className="min-w-0">
+                  <p className="text-sm text-text-primary">{source.name}</p>
+                  <p className="text-[10px] text-text-tertiary truncate">{source.interface}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`flex items-center gap-1 text-xs ${configured ? 'text-success' : 'text-text-tertiary'}`}>
+                    <Circle size={6} className={configured ? 'fill-success' : 'fill-text-tertiary'} />
+                    {configured ? 'Configured' : 'Not configured'}
+                  </span>
+                  {!configured && <button type="button" className="text-xs font-medium text-cei-blue-light hover:text-cei-blue">Configure</button>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -92,12 +92,6 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Sample notice */}
-      <div className="mt-6 px-4 py-2.5 bg-amber-50/50 border border-amber-200/40 rounded-lg">
-        <p className="text-xs text-amber-700">
-          <span className="font-semibold">Sample data for demonstration.</span> Settings shown here are illustrative. In production, these control real provider connections and data handling policies.
-        </p>
-      </div>
     </div>
   );
 }

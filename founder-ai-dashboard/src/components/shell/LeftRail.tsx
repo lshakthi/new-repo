@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, Compass, Settings, PanelLeftClose, PanelLeft, Clock
+  Home, Compass, Settings, PanelLeftClose, PanelLeft, Clock, Wrench
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useProductTour } from '../tour/ProductTour';
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home, path: '/' },
   { id: 'tasks', label: 'New Task', icon: Compass, path: '/tasks' },
   { id: 'history', label: 'History', icon: Clock, path: '/history' },
+  { id: 'tools', label: 'Tools', icon: Wrench, path: '/tools' },
 ];
 
 const bottomItems: NavItem[] = [
@@ -27,6 +28,7 @@ const tourAnchors: Record<string, string | undefined> = {
   home: 'nav-home',
   tasks: 'nav-new-task',
   history: 'nav-history',
+  tools: 'nav-tools',
   settings: 'nav-settings',
 };
 
