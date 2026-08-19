@@ -37,6 +37,124 @@ export interface TaskConversation {
   messages: ChatMessage[];
 }
 
+// Generate a plausible mock answer to any free-text question.
+// In production this is where the real backend response would be returned.
+export function generateAnswer(question: string, index: number): ChatMessage {
+  const q = question.toLowerCase();
+
+  // Route to a topically relevant canned answer based on keywords
+  if (q.includes('variant') || q.includes('mutation') || q.includes('brca') || q.includes('tp53')) {
+    return {
+      id: `ans-${index}`, role: 'assistant', content: '',
+      sections: [
+        {
+          id: `ans-${index}-s1`, title: 'Variant evidence summary',
+          content: `Based on your question about "${question}", I queried ClinVar, gnomAD, and the literature. The evidence points to a well-characterized variant with clear clinical annotations. Population frequency and functional predictions are consistent with the reported classification.`,
+          confidence: 'strong',
+          metrics: [
+            { label: 'ClinVar', value: 'Pathogenic' },
+            { label: 'gnomAD freq', value: '0.00001' },
+            { label: 'Literature', value: '18 papers' },
+            { label: 'Review status', value: 'Expert panel' },
+          ],
+          citations: [
+            { id: `ans-${index}-c1`, label: 'ClinVar', sourceType: 'database' },
+            { id: `ans-${index}-c2`, label: 'gnomAD v4.1', sourceType: 'database' },
+          ],
+        },
+      ],
+      provenance: [
+        { id: `ans-${index}-p1`, action: 'Queried ClinVar', source: 'ClinVar API', duration: '0.8s', icon: 'database' },
+        { id: `ans-${index}-p2`, action: 'Queried gnomAD', source: 'gnomAD', duration: '1.1s', icon: 'database' },
+        { id: `ans-${index}-p3`, action: 'Searched PubMed', source: 'PubMed', duration: '1.6s', icon: 'search' },
+      ],
+      totalDuration: '7 seconds',
+      followUps: ['What therapies target this variant?', 'Show the population frequency by ancestry.'],
+    };
+  }
+
+  if (q.includes('fda') || q.includes('regulatory') || q.includes('510') || q.includes('pathway') || q.includes('reimburs')) {
+    return {
+      id: `ans-${index}`, role: 'assistant', content: '',
+      sections: [
+        {
+          id: `ans-${index}-s1`, title: 'Regulatory assessment',
+          content: `For "${question}", I checked FDA device classifications, predicate devices, and recent clearances. A 510(k) pathway appears most likely given available predicates, though the final route depends on your specific intended-use claim.`,
+          confidence: 'moderate',
+          metrics: [
+            { label: 'Likely pathway', value: '510(k)' },
+            { label: 'Predicates', value: '3 found' },
+            { label: 'Review time', value: '~90 days' },
+            { label: 'Prep time', value: '6-9 mo' },
+          ],
+          citations: [
+            { id: `ans-${index}-c1`, label: 'openFDA 510(k) DB', sourceType: 'database' },
+            { id: `ans-${index}-c2`, label: 'FDA guidance', sourceType: 'web' },
+          ],
+        },
+      ],
+      provenance: [
+        { id: `ans-${index}-p1`, action: 'Searched FDA device database', source: 'openFDA', duration: '1.3s', icon: 'database' },
+        { id: `ans-${index}-p2`, action: 'Retrieved recent clearances', source: 'FDA 510(k) DB', duration: '2.1s', icon: 'search' },
+      ],
+      totalDuration: '9 seconds',
+      followUps: ['What clinical study does FDA expect?', 'Compare 510(k) vs De Novo for this product.'],
+    };
+  }
+
+  if (q.includes('compound') || q.includes('inhibitor') || q.includes('drug') || q.includes('molecule')) {
+    return {
+      id: `ans-${index}`, role: 'assistant', content: '',
+      sections: [
+        {
+          id: `ans-${index}-s1`, title: 'Compound landscape',
+          content: `For "${question}", I searched ChEMBL and PubChem for known compounds and bioactivity data, and cross-referenced clinical trials. Several molecules with reported activity were found, spanning approved drugs and investigational agents.`,
+          confidence: 'moderate',
+          chartData: [
+            { name: 'Approved', value: 5 },
+            { name: 'Phase 3', value: 3 },
+            { name: 'Phase 1/2', value: 9 },
+            { name: 'Preclinical', value: 12 },
+          ],
+          chartType: 'bar',
+          citations: [
+            { id: `ans-${index}-c1`, label: 'ChEMBL', sourceType: 'database' },
+            { id: `ans-${index}-c2`, label: 'ClinicalTrials.gov', sourceType: 'trial' },
+          ],
+        },
+      ],
+      provenance: [
+        { id: `ans-${index}-p1`, action: 'Queried ChEMBL bioactivity', source: 'ChEMBL', duration: '1.4s', icon: 'database' },
+        { id: `ans-${index}-p2`, action: 'Searched clinical trials', source: 'CT.gov', duration: '1.8s', icon: 'search' },
+      ],
+      totalDuration: '11 seconds',
+      followUps: ['Which compounds are most selective?', 'Show the SAR for the lead series.'],
+    };
+  }
+
+  // Generic literature-grounded answer
+  return {
+    id: `ans-${index}`, role: 'assistant', content: '',
+    sections: [
+      {
+        id: `ans-${index}-s1`, title: 'Research summary',
+        content: `I searched PubMed, bioRxiv, and relevant databases for "${question}". Here is a synthesis of the strongest available evidence, with sources attached. Confidence reflects how consistently the sources agree.`,
+        confidence: 'moderate',
+        citations: [
+          { id: `ans-${index}-c1`, label: 'PMID 38291045', sourceType: 'pubmed' },
+          { id: `ans-${index}-c2`, label: 'Nature Reviews 2024', sourceType: 'pubmed' },
+        ],
+      },
+    ],
+    provenance: [
+      { id: `ans-${index}-p1`, action: 'Searched PubMed', source: 'PubMed E-utilities', duration: '1.8s', icon: 'search' },
+      { id: `ans-${index}-p2`, action: 'Searched bioRxiv preprints', source: 'bioRxiv API', duration: '1.2s', icon: 'search' },
+    ],
+    totalDuration: '8 seconds',
+    followUps: ['Can you go deeper on this?', 'What are the main open questions?'],
+  };
+}
+
 export const taskConversations: Record<string, TaskConversation> = {
   'research-question': {
     taskId: 'research-question',
@@ -748,4 +866,22 @@ taskConversations['vertical-therapeutics'] = {
       'Is there a biomarker to identify patients who will resist?',
     ]},
   ],
+};
+
+
+// Blank new-chat session: no pre-loaded messages, user starts fresh
+taskConversations['new-chat'] = {
+  taskId: 'new-chat',
+  title: 'New chat',
+  summary: '',
+  messages: [],
+};
+
+
+// Empty conversation for a fresh "New chat" session
+taskConversations['new-chat'] = {
+  taskId: 'new-chat',
+  title: 'New chat',
+  summary: '',
+  messages: [],
 };

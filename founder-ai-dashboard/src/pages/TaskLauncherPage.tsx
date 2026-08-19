@@ -3,14 +3,14 @@ import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useProductTour } from '../components/tour/ProductTour';
 import { mockTaskGroups } from '../mocks/tasks';
-import { taskConversations, defaultConversation } from '../mocks/conversations';
-import type { TaskConversation } from '../mocks/conversations';
+import { taskConversations, defaultConversation, generateAnswer } from '../mocks/conversations';
+import type { TaskConversation, ChatMessage } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
 import { ChatResponse } from '../components/ChatResponse';
 import {
   FlaskConical, Target, Atom, Map, Eye, Package, Zap,
   ArrowRight, Clock, ShieldAlert, Search, Send, User, Bot,
-  ArrowLeft
+  ArrowLeft, Plus
 } from 'lucide-react';
 
 const groupIcons: Record<string, typeof FlaskConical> = {
@@ -51,13 +51,16 @@ export function TaskLauncherPage() {
     ?? null;
   const [activeTask, setActiveTask] = useState<string | null>(initialTask);
   const [inputValue, setInputValue] = useState('');
+  // Extra messages added by the user during the session (the Q&A thread)
+  const [extraMessages, setExtraMessages] = useState<ChatMessage[]>([]);
+  const [isThinking, setIsThinking] = useState(false);
   const tourIsGuidingTask = tourIsOpen && ['task-query', 'task-group', 'task-select'].includes(tourStage);
 
   // Get conversation for the selected task
   const conversation: TaskConversation = activeTask
     ? (taskConversations[activeTask] || defaultConversation)
     : defaultConversation;
-  const messages = conversation.messages;
+  const messages = [...conversation.messages, ...extraMessages];
 
   const activeTaskIds = mode === ViewMode.SCIENCE ? scienceTaskIds : businessTaskIds;
   const visibleGroups = mockTaskGroups
@@ -85,19 +88,45 @@ export function TaskLauncherPage() {
 
   const handleTaskSelect = (taskId: string) => {
     reportTourEvent({ type: 'TASK_SELECTED', taskId });
+    setExtraMessages([]);
+    setInputValue('');
     setActiveTask(taskId);
   };
 
   const handleBack = () => {
     setActiveTask(null);
+    setExtraMessages([]);
+    setInputValue('');
+  };
+
+  const askQuestion = (question: string) => {
+    const trimmed = question.trim();
+    if (!trimmed) return;
+
+    // If no task is active yet, open a fresh chat
+    if (!activeTask) setActiveTask('new-chat');
+
+    const turnIndex = extraMessages.length;
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: trimmed,
+    };
+    setExtraMessages((prev) => [...prev, userMsg]);
+    setInputValue('');
+    setIsThinking(true);
+
+    // Simulate backend latency, then append the answer
+    window.setTimeout(() => {
+      const answer = generateAnswer(trimmed, turnIndex);
+      setExtraMessages((prev) => [...prev, answer]);
+      setIsThinking(false);
+    }, 900);
   };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      setActiveTask('custom-query');
-      setInputValue('');
-    }
+    askQuestion(inputValue);
   };
 
   // ─── ACTIVE TASK: Show inline chat ───────────────────────────
@@ -122,6 +151,32 @@ export function TaskLauncherPage() {
 
         {/* Conversation */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-cei-blue/10 flex items-center justify-center mb-4">
+                <Bot size={24} className="text-cei-blue" />
+              </div>
+              <h2 className="text-base font-semibold text-text-primary">Start a new chat</h2>
+              <p className="text-sm text-text-secondary mt-1.5">
+                Ask any scientific or business question in plain language. Founder AI will figure out which sources and tools to use.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center mt-4">
+                {[
+                  'What is known about TP53 as a drug target?',
+                  'What FDA pathway fits my diagnostic?',
+                  'Interpret the BRAF V600E variant.',
+                ].map((ex, i) => (
+                  <button
+                    key={i}
+                    onClick={() => askQuestion(ex)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-border-subtle text-text-secondary hover:border-cei-blue-light/40 hover:text-cei-blue transition-all"
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {messages.map((msg) => (
             <div key={msg.id}>
               {/* User message */}
@@ -149,18 +204,33 @@ export function TaskLauncherPage() {
                   </div>
                   <div className="flex-1">
                     <ChatResponse
-                      summary={conversation.summary}
+                      summary={msg.id.startsWith('ans-') ? '' : conversation.summary}
                       sections={msg.sections}
                       provenance={msg.provenance}
                       totalDuration={msg.totalDuration}
                       followUps={msg.followUps}
-                      onFollowUpClick={(text) => setInputValue(text)}
+                      onFollowUpClick={(text) => askQuestion(text)}
                     />
                   </div>
                 </div>
               )}
             </div>
           ))}
+
+          {/* Thinking indicator */}
+          {isThinking && (
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-cei-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Bot size={12} className="text-white" />
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-panel">
+                <span className="w-1.5 h-1.5 rounded-full bg-cei-blue/60 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cei-blue/60 animate-pulse [animation-delay:150ms]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cei-blue/60 animate-pulse [animation-delay:300ms]" />
+                <span className="text-xs text-text-tertiary ml-1">Searching sources...</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input */}
@@ -194,11 +264,20 @@ export function TaskLauncherPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       {/* Header */}
-      <div data-tour="task-overview" className="mb-6">
-        <h1 className="text-xl font-semibold text-text-primary">What do you want to accomplish?</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          A task is a guided workflow that gives Founder AI a clear goal, relevant tools, and an expected output.
-        </p>
+      <div data-tour="task-overview" className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text-primary">What do you want to accomplish?</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            A task is a guided workflow that gives Founder AI a clear goal, relevant tools, and an expected output.
+          </p>
+        </div>
+        <button
+          onClick={() => handleTaskSelect('new-chat')}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cei-blue text-white text-sm font-medium hover:bg-cei-navy transition-colors flex-shrink-0 shadow-sm"
+        >
+          <Plus size={16} />
+          New chat
+        </button>
       </div>
 
       {/* Search / Just ask */}
