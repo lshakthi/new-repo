@@ -105,6 +105,101 @@
             aria-labelledby="tab-current"
             data-panel="current"
           >
+            <section class="journey-slide" aria-labelledby="journey-title">
+              <header class="journey-heading">
+                <div>
+                  <p class="kicker">Where the current scope fits</p>
+                  <h3 id="journey-title">Bioscience Startup Journey</h3>
+                </div>
+                <p>
+                  Seven stages from an early opportunity to a product in the
+                  market, with the platform's primary support area highlighted.
+                </p>
+              </header>
+              <div class="journey-legend" aria-label="Timeline legend">
+                <span class="legend-current">Current platform support</span>
+                <span class="legend-downstream">Broader startup journey</span>
+              </div>
+              <ol class="journey-map" aria-label="Bioscience startup stages">
+                <svg
+                  class="journey-road"
+                  aria-hidden="true"
+                  viewBox="0 0 1000 420"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    class="road-shoulder"
+                    d="M80 72H820C930 72 930 208 820 208H220C110 208 110 344 220 344H920"
+                  />
+                  <path
+                    class="road-surface"
+                    d="M80 72H820C930 72 930 208 820 208H220C110 208 110 344 220 344H920"
+                  />
+                  <path
+                    class="road-center"
+                    d="M80 72H820C930 72 930 208 820 208H220C110 208 110 344 220 344H920"
+                  />
+                </svg>
+                <li class="journey-stage stage-1">
+                  <span>01</span>
+                  <div>
+                    <b>Opportunity &amp; ideation</b>
+                    <small>Frame the unmet need and initial concept.</small>
+                  </div>
+                </li>
+                <li class="journey-stage stage-2 in-scope">
+                  <span>02</span>
+                  <div>
+                    <b>Market validation</b>
+                    <small
+                      >Test demand, users, and the competitive landscape.</small
+                    >
+                  </div>
+                </li>
+                <li class="journey-stage stage-3 in-scope">
+                  <span>03</span>
+                  <div>
+                    <b>Product scoping</b>
+                    <small
+                      >Define the product, audience, and success
+                      criteria.</small
+                    >
+                  </div>
+                </li>
+                <li class="journey-stage stage-4 in-scope">
+                  <span>04</span>
+                  <div>
+                    <b>Research &amp; feasibility</b>
+                    <small
+                      >Assess evidence, rationale, and critical gaps.</small
+                    >
+                  </div>
+                </li>
+                <li class="journey-stage stage-5 in-scope">
+                  <span>05</span>
+                  <div>
+                    <b>Technical proof of concept</b>
+                    <small
+                      >Plan and support validation of the core approach.</small
+                    >
+                  </div>
+                </li>
+                <li class="journey-stage stage-6">
+                  <span>06</span>
+                  <div>
+                    <b>Development &amp; validation</b>
+                    <small>Build, verify, and prepare the product.</small>
+                  </div>
+                </li>
+                <li class="journey-stage stage-7">
+                  <span>07</span>
+                  <div>
+                    <b>Pilot, launch &amp; scale</b>
+                    <small>Pilot, release, monitor, and grow.</small>
+                  </div>
+                </li>
+              </ol>
+            </section>
             <section class="scope-side now">
               <header>
                 <div>
@@ -598,7 +693,7 @@
           <h2>Earn complexity in stages.</h2>
         </div>
         <ol>
-          <li class="active">
+          <li>
             <span>1</span><b>Evidence lookup</b
             ><small>Build the source foundation</small>
           </li>
@@ -624,10 +719,9 @@
       <div>
         <span class="brand-mark">CEI</span>
         <p>
-          <b>Project Scope</b><small>Prepared for collaborative review</small>
+          <b>Project Scope</b>
         </p>
       </div>
-      <p>Source basis: Context/notes.md · Reach Goals 1–4 + Stretch Goal 5</p>
       <a href="#top">Back to top ↑</a>
     </footer>
   </body>
