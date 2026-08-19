@@ -37,13 +37,59 @@ export interface TaskConversation {
   messages: ChatMessage[];
 }
 
+export type AnswerMode = 'science' | 'business';
+
+// Suggested starter prompts differ by mode
+export const starterPrompts: Record<AnswerMode, string[]> = {
+  science: [
+    'What is known about TP53 as a drug target?',
+    'Interpret the BRAF V600E variant.',
+    'What compounds inhibit EGFR?',
+  ],
+  business: [
+    'What FDA pathway fits my diagnostic?',
+    'Size the market for an NSCLC companion diagnostic.',
+    'Is there prior art for our antibody approach?',
+  ],
+};
+
 // Generate a plausible mock answer to any free-text question.
+// The answer is shaped by the active mode: Science mode returns computational and
+// mechanistic depth, Business mode returns commercial and diligence framing.
 // In production this is where the real backend response would be returned.
-export function generateAnswer(question: string, index: number): ChatMessage {
+export function generateAnswer(question: string, index: number, mode: AnswerMode = 'science'): ChatMessage {
   const q = question.toLowerCase();
 
-  // Route to a topically relevant canned answer based on keywords
+  // ─── Variant / mutation ───────────────────────────────
   if (q.includes('variant') || q.includes('mutation') || q.includes('brca') || q.includes('tp53')) {
+    if (mode === 'business') {
+      return {
+        id: `ans-${index}`, role: 'assistant', content: '',
+        sections: [
+          {
+            id: `ans-${index}-s1`, title: 'Commercial and diligence view',
+            content: `For "${question}", here is what matters for the business case. The variant is clinically actionable, which supports a companion-diagnostic or precision-medicine positioning. Reimbursement precedent exists for pathogenic variant testing, and the addressable population is well defined.`,
+            confidence: 'moderate',
+            metrics: [
+              { label: 'Actionability', value: 'FDA-linked Rx' },
+              { label: 'Test CPT', value: '81162' },
+              { label: 'US carriers', value: '~1 in 400' },
+              { label: 'Diligence flag', value: 'Low risk' },
+            ],
+            citations: [
+              { id: `ans-${index}-c1`, label: 'NCCN Guidelines', sourceType: 'web' },
+              { id: `ans-${index}-c2`, label: 'CMS coverage policy', sourceType: 'web' },
+            ],
+          },
+        ],
+        provenance: [
+          { id: `ans-${index}-p1`, action: 'Checked clinical actionability', source: 'CIViC / NCCN', duration: '1.0s', icon: 'database' },
+          { id: `ans-${index}-p2`, action: 'Reviewed reimbursement precedent', source: 'CMS / payer policy', duration: '1.4s', icon: 'search' },
+        ],
+        totalDuration: '8 seconds',
+        followUps: ['What is the reimbursement path for this test?', 'How large is the eligible population?'],
+      };
+    }
     return {
       id: `ans-${index}`, role: 'assistant', content: '',
       sections: [
@@ -73,7 +119,38 @@ export function generateAnswer(question: string, index: number): ChatMessage {
     };
   }
 
+  // ─── Regulatory / FDA ──────────────────────────────────
   if (q.includes('fda') || q.includes('regulatory') || q.includes('510') || q.includes('pathway') || q.includes('reimburs')) {
+    if (mode === 'science') {
+      return {
+        id: `ans-${index}`, role: 'assistant', content: '',
+        sections: [
+          {
+            id: `ans-${index}-s1`, title: 'Evidence requirements (analytical and clinical)',
+            content: `For "${question}", here is the scientific evidence a regulatory submission would need. Focus on analytical validation (sensitivity, specificity, LOD/LOQ) and a clinical validation study design with a defined ground-truth comparator.`,
+            confidence: 'moderate',
+            tableData: {
+              headers: ['Evidence', 'Metric', 'Typical target'],
+              rows: [
+                ['Analytical sensitivity', 'LOD', '95% detection'],
+                ['Analytical specificity', 'Cross-reactivity', '< 2%'],
+                ['Clinical sensitivity', 'vs ground truth', '> 90%'],
+                ['Reproducibility', 'CV across sites', '< 10%'],
+              ]
+            },
+            citations: [
+              { id: `ans-${index}-c1`, label: 'FDA guidance', sourceType: 'web' },
+              { id: `ans-${index}-c2`, label: 'CLSI EP standards', sourceType: 'web' },
+            ],
+          },
+        ],
+        provenance: [
+          { id: `ans-${index}-p1`, action: 'Reviewed analytical validation standards', source: 'CLSI / FDA', duration: '1.2s', icon: 'search' },
+        ],
+        totalDuration: '8 seconds',
+        followUps: ['What study size gives 90% power?', 'What analytical method validation applies?'],
+      };
+    }
     return {
       id: `ans-${index}`, role: 'assistant', content: '',
       sections: [
@@ -102,7 +179,68 @@ export function generateAnswer(question: string, index: number): ChatMessage {
     };
   }
 
+  // ─── Market / commercial ───────────────────────────────
+  if (q.includes('market') || q.includes('tam') || q.includes('revenue') || q.includes('pricing') || q.includes('investor') || q.includes('diligence')) {
+    return {
+      id: `ans-${index}`, role: 'assistant', content: '',
+      sections: [
+        {
+          id: `ans-${index}-s1`, title: 'Market sizing',
+          content: `For "${question}", I triangulated a top-down (prevalence-based) and bottom-up (unit-economics) estimate. Every figure below depends on the assumptions shown, and the total updates if you change them.`,
+          confidence: 'moderate',
+          metrics: [
+            { label: 'TAM', value: '$4.9B' },
+            { label: 'SAM', value: '$1.9B' },
+            { label: 'SOM (Yr 3)', value: '$285M' },
+            { label: 'Method', value: 'Triangulated' },
+          ],
+          citations: [
+            { id: `ans-${index}-c1`, label: 'SEER epidemiology', sourceType: 'web' },
+            { id: `ans-${index}-c2`, label: 'Comparable pricing', sourceType: 'web' },
+          ],
+        },
+      ],
+      provenance: [
+        { id: `ans-${index}-p1`, action: 'Pulled prevalence data', source: 'SEER / CDC', duration: '1.1s', icon: 'database' },
+        { id: `ans-${index}-p2`, action: 'Modeled unit economics', source: 'Local analysis', duration: '0.6s', icon: 'compute' },
+      ],
+      totalDuration: '7 seconds',
+      followUps: ['Change the adoption rate assumption.', 'What is the reimbursement per test?'],
+    };
+  }
+
+  // ─── Compound / drug ───────────────────────────────────
   if (q.includes('compound') || q.includes('inhibitor') || q.includes('drug') || q.includes('molecule')) {
+    if (mode === 'business') {
+      return {
+        id: `ans-${index}`, role: 'assistant', content: '',
+        sections: [
+          {
+            id: `ans-${index}-s1`, title: 'Competitive drug landscape',
+            content: `For "${question}", here is the commercial picture. The class has approved incumbents with substantial revenue, so a new entrant needs clear differentiation. Patent expiry timing and resistance-setting whitespace are the key business levers.`,
+            confidence: 'moderate',
+            tableData: {
+              headers: ['Drug', 'Company', '2025 sales', 'Patent expiry'],
+              rows: [
+                ['Incumbent A', 'Large pharma', '$4.2B', '2029'],
+                ['Incumbent B', 'Large pharma', '$2.1B', '2031'],
+                ['Incumbent C', 'Mid biotech', '$0.9B', '2033'],
+              ]
+            },
+            citations: [
+              { id: `ans-${index}-c1`, label: 'Company filings', sourceType: 'web' },
+              { id: `ans-${index}-c2`, label: 'Patent records', sourceType: 'patent' },
+            ],
+          },
+        ],
+        provenance: [
+          { id: `ans-${index}-p1`, action: 'Reviewed competitor revenue', source: 'SEC filings', duration: '1.5s', icon: 'search' },
+          { id: `ans-${index}-p2`, action: 'Checked patent expiry', source: 'PatentsView', duration: '1.9s', icon: 'search' },
+        ],
+        totalDuration: '10 seconds',
+        followUps: ['When do the key patents expire?', 'What is the resistance-setting opportunity?'],
+      };
+    }
     return {
       id: `ans-${index}`, role: 'assistant', content: '',
       sections: [
@@ -132,7 +270,28 @@ export function generateAnswer(question: string, index: number): ChatMessage {
     };
   }
 
-  // Generic literature-grounded answer
+  // ─── Generic fallback (mode-aware) ─────────────────────
+  if (mode === 'business') {
+    return {
+      id: `ans-${index}`, role: 'assistant', content: '',
+      sections: [
+        {
+          id: `ans-${index}-s1`, title: 'Business summary',
+          content: `I reviewed market reports, competitor filings, and public evidence for "${question}". Here is a decision-oriented synthesis framed for founders and investors, with sources attached so you can defend each claim in diligence.`,
+          confidence: 'moderate',
+          citations: [
+            { id: `ans-${index}-c1`, label: 'Industry report', sourceType: 'web' },
+            { id: `ans-${index}-c2`, label: 'Competitor filing', sourceType: 'web' },
+          ],
+        },
+      ],
+      provenance: [
+        { id: `ans-${index}-p1`, action: 'Searched market and competitor sources', source: 'Web + filings', duration: '1.9s', icon: 'search' },
+      ],
+      totalDuration: '8 seconds',
+      followUps: ['What does this mean for our positioning?', 'Who are the main competitors?'],
+    };
+  }
   return {
     id: `ans-${index}`, role: 'assistant', content: '',
     sections: [

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useProductTour } from '../components/tour/ProductTour';
 import { mockTaskGroups } from '../mocks/tasks';
-import { taskConversations, defaultConversation, generateAnswer } from '../mocks/conversations';
+import { taskConversations, defaultConversation, generateAnswer, starterPrompts } from '../mocks/conversations';
 import type { TaskConversation, ChatMessage } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
 import { ChatResponse } from '../components/ChatResponse';
@@ -116,9 +116,10 @@ export function TaskLauncherPage() {
     setInputValue('');
     setIsThinking(true);
 
-    // Simulate backend latency, then append the answer
+    // Simulate backend latency, then append the answer (shaped by mode)
+    const answerMode = mode === ViewMode.BUSINESS ? 'business' : 'science';
     window.setTimeout(() => {
-      const answer = generateAnswer(trimmed, turnIndex);
+      const answer = generateAnswer(trimmed, turnIndex, answerMode);
       setExtraMessages((prev) => [...prev, answer]);
       setIsThinking(false);
     }, 900);
@@ -158,14 +159,12 @@ export function TaskLauncherPage() {
               </div>
               <h2 className="text-base font-semibold text-text-primary">Start a new chat</h2>
               <p className="text-sm text-text-secondary mt-1.5">
-                Ask any scientific or business question in plain language. Founder AI will figure out which sources and tools to use.
+                {mode === ViewMode.BUSINESS
+                  ? 'Ask a business or commercialization question in plain language. Founder AI answers with regulatory, market, and diligence framing.'
+                  : 'Ask a scientific question in plain language. Founder AI answers with computational and mechanistic depth.'}
               </p>
               <div className="flex flex-wrap gap-2 justify-center mt-4">
-                {[
-                  'What is known about TP53 as a drug target?',
-                  'What FDA pathway fits my diagnostic?',
-                  'Interpret the BRAF V600E variant.',
-                ].map((ex, i) => (
+                {(mode === ViewMode.BUSINESS ? starterPrompts.business : starterPrompts.science).map((ex, i) => (
                   <button
                     key={i}
                     onClick={() => askQuestion(ex)}
