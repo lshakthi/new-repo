@@ -7,10 +7,14 @@ import { taskConversations, defaultConversation, generateAnswer, starterPrompts 
 import type { TaskConversation, ChatMessage } from '../mocks/conversations';
 import { ViewMode } from '../design-system/tokens';
 import { ChatResponse } from '../components/ChatResponse';
+import { NcbiToolCard } from '../components/NcbiToolCard';
+import { NcbiToolMenu } from '../components/NcbiToolMenu';
+import { detectNcbiTool, getNcbiTool } from '../mocks/ncbiTools';
+import type { NcbiToolId } from '../mocks/ncbiTools';
 import {
   FlaskConical, Target, Atom, Map, Eye, Package, Zap,
   ArrowRight, Clock, ShieldAlert, Search, Send, User, Bot,
-  ArrowLeft, Plus
+  ArrowLeft, Plus, Dna
 } from 'lucide-react';
 
 const groupIcons: Record<string, typeof FlaskConical> = {
@@ -62,6 +66,11 @@ export function TaskLauncherPage() {
     : defaultConversation;
   const messages = [...conversation.messages, ...extraMessages];
 
+  // NCBI tool discovery: "/" opens a tool menu; free text shows a live intent hint.
+  const slashActive = inputValue.startsWith('/');
+  const slashFilter = slashActive ? inputValue.slice(1) : '';
+  const detectedTool = slashActive ? null : detectNcbiTool(inputValue);
+
   const activeTaskIds = mode === ViewMode.SCIENCE ? scienceTaskIds : businessTaskIds;
   const visibleGroups = mockTaskGroups
     .map(group => ({ ...group, tasks: group.tasks.filter(task => activeTaskIds.has(task.id)) }))
@@ -99,9 +108,31 @@ export function TaskLauncherPage() {
     setInputValue('');
   };
 
+  // Append a user turn + an interactive NCBI tool card as the assistant turn.
+  const launchNcbiTool = (toolId: NcbiToolId, userText: string, input: string, autoRun: boolean) => {
+    if (!activeTask) setActiveTask('new-chat');
+    const stamp = Date.now();
+    const userMsg: ChatMessage = { id: `user-${stamp}`, role: 'user', content: userText };
+    const toolMsg: ChatMessage = {
+      id: `ncbi-${stamp}`,
+      role: 'assistant',
+      content: '',
+      ncbiTool: { toolId, input, autoRun },
+    };
+    setExtraMessages((prev) => [...prev, userMsg, toolMsg]);
+    setInputValue('');
+  };
+
   const askQuestion = (question: string) => {
     const trimmed = question.trim();
     if (!trimmed) return;
+
+    // NCBI intent detection: organism, gene/keyword, or a raw nucleotide string.
+    const ncbiToolId = detectNcbiTool(trimmed);
+    if (ncbiToolId) {
+      launchNcbiTool(ncbiToolId, trimmed, trimmed, true);
+      return;
+    }
 
     // If no task is active yet, open a fresh chat
     if (!activeTask) setActiveTask('new-chat');
@@ -195,6 +226,25 @@ export function TaskLauncherPage() {
                 </div>
               )}
 
+              {/* Assistant NCBI tool card */}
+              {msg.role === 'assistant' && msg.ncbiTool && (
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-cei-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Bot size={12} className="text-white" />
+                  </div>
+                  <div className="flex-1 space-y-2 max-w-3xl">
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      I mapped that to the <span className="font-medium text-text-primary">{getNcbiTool(msg.ncbiTool.toolId as NcbiToolId).name}</span> tool. Review the input, then run it.
+                    </p>
+                    <NcbiToolCard
+                      toolId={msg.ncbiTool.toolId as NcbiToolId}
+                      initialValue={msg.ncbiTool.input}
+                      autoRun={msg.ncbiTool.autoRun}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Assistant response */}
               {msg.role === 'assistant' && msg.sections && (
                 <div className="flex items-start gap-3">
@@ -234,26 +284,49 @@ export function TaskLauncherPage() {
 
         {/* Input */}
         <div className="border-t border-border-subtle bg-surface-elevated px-6 py-4 flex-shrink-0">
-          <form onSubmit={handleSend} className="max-w-2xl mx-auto">
-            <div className="relative">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask a follow-up question..."
-                className="w-full pl-4 pr-12 py-3 rounded-xl border border-border-subtle bg-surface-panel text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all"
-                aria-label="Ask a follow-up"
-              />
-              <button
-                type="submit"
-                disabled={!inputValue.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cei-blue text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-cei-navy transition-colors"
-                aria-label="Send"
-              >
-                <Send size={14} />
-              </button>
+          <div className="max-w-2xl mx-auto">
+            {/* Slash-menu for NCBI tool discovery */}
+            {slashActive && (
+              <div className="mb-2">
+                <NcbiToolMenu
+                  filter={slashFilter}
+                  onSelect={(toolId) => launchNcbiTool(toolId, `Use the ${getNcbiTool(toolId).name} tool`, '', false)}
+                />
+              </div>
+            )}
+            <form onSubmit={handleSend}>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Ask a follow-up, or type / for NCBI tools..."
+                  className="w-full pl-4 pr-12 py-3 rounded-xl border border-border-subtle bg-surface-panel text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all"
+                  aria-label="Ask a follow-up"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cei-blue text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-cei-navy transition-colors"
+                  aria-label="Send"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </form>
+            {/* Live intent hint */}
+            <div className="mt-1.5 px-1">
+              {detectedTool ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-cei-blue">
+                  <Dna size={11} /> Will run the {getNcbiTool(detectedTool).name} tool
+                </span>
+              ) : (
+                <span className="text-[11px] text-text-tertiary">
+                  Type <span className="font-mono text-text-secondary">/</span> to browse NCBI tools, or ask about an organism, gene, or paste a sequence.
+                </span>
+              )}
             </div>
-          </form>
+          </div>
         </div>
       </div>
     );

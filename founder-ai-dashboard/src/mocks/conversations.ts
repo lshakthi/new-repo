@@ -8,6 +8,12 @@ export interface ChatMessage {
   provenance?: ProvenanceStep[];
   totalDuration?: string;
   followUps?: string[];
+  /** When set, this assistant turn renders an interactive NCBI tool card. */
+  ncbiTool?: {
+    toolId: string;
+    input: string;
+    autoRun: boolean;
+  };
 }
 
 export interface ChatSection {

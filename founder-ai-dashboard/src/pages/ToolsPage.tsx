@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { ConfidenceBadge, ProvenanceTrail, UncertaintyBlock } from '../design-system';
 import { useProductTour } from '../components/tour/ProductTour';
+import { NcbiToolCard } from '../components/NcbiToolCard';
+import { ncbiTools } from '../mocks/ncbiTools';
+import type { NcbiToolId } from '../mocks/ncbiTools';
 import {
   configuredToolSourceIds,
   executionStages,
@@ -24,6 +27,7 @@ import {
   toolSources,
 } from '../mocks/tools';
 import type { ToolSource, ToolSourceId } from '../mocks/tools';
+import { Dna, GitBranch, ListTree } from 'lucide-react';
 
 type RunState = 'idle' | 'running' | 'success';
 
@@ -45,8 +49,15 @@ function SourceLogo({ source, muted = false }: { source: ToolSource; muted?: boo
   );
 }
 
+const ncbiToolIcon: Record<NcbiToolId, typeof Dna> = {
+  'taxonomy-lineage': ListTree,
+  'sequence-search': GitBranch,
+  'blast-sequence': Dna,
+};
+
 export function ToolsPage() {
   const { reportTourEvent } = useProductTour();
+  const [selectedNcbiToolId, setSelectedNcbiToolId] = useState<NcbiToolId | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<ToolSourceId | null>(null);
   const [query, setQuery] = useState('');
   const [runState, setRunState] = useState<RunState>('idle');
@@ -104,6 +115,39 @@ export function ToolsPage() {
 
   const configuredCount = configuredToolSourceIds.length;
 
+  // ─── NCBI tool detail view ─────────────────────────────────
+  if (selectedNcbiToolId) {
+    const tool = ncbiTools.find((t) => t.id === selectedNcbiToolId)!;
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <button
+          type="button"
+          onClick={() => setSelectedNcbiToolId(null)}
+          className="mb-5 inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-cei-blue"
+        >
+          <ArrowLeft size={13} /> All tools
+        </button>
+
+        <header className="mb-5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-cei-blue/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cei-blue">
+              <Sparkles size={11} aria-hidden="true" /> NCBI tool
+            </span>
+          </div>
+          <h1 className="text-xl font-semibold text-text-primary">{tool.name}</h1>
+          <p className="text-sm text-text-secondary mt-1 max-w-2xl">{tool.description}</p>
+        </header>
+
+        <NcbiToolCard toolId={tool.id} />
+
+        <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-border-subtle bg-surface-panel/60 px-4 py-3 text-xs text-text-secondary">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-evidence-moderate" />
+          <p><span className="font-semibold text-text-primary">Demo data:</span> results are illustrative and shaped like real {tool.interface} responses. Wire the runner in <span className="font-mono">src/mocks/ncbiTools.ts</span> to the live API for production.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!source) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -123,6 +167,42 @@ export function ToolsPage() {
             <ShieldCheck size={14} aria-hidden="true" /> {configuredCount} of {toolSources.length} configured
           </div>
         </header>
+
+        <section aria-labelledby="ncbi-tools-heading" className="mb-8">
+          <div className="mb-4">
+            <h2 id="ncbi-tools-heading" className="text-sm font-semibold text-text-primary">NCBI quick tools</h2>
+            <p className="text-xs text-text-secondary mt-1">Answer a specific question in one step. Pick a tool, fill in the input, and run it.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {ncbiTools.map((tool) => {
+              const Icon = ncbiToolIcon[tool.id];
+              return (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => setSelectedNcbiToolId(tool.id)}
+                  className="group relative rounded-xl border border-border-subtle bg-surface-elevated p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-cei-blue-light/50 hover:shadow-md"
+                  aria-label={`Open ${tool.name}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-cei-blue/10 text-cei-blue">
+                      <Icon size={20} aria-hidden="true" />
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success-bg px-2 py-1 text-[10px] font-semibold text-success">
+                      <Circle size={6} className="fill-success" /> Ready
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-sm font-semibold text-text-primary">{tool.name}</h3>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">{tool.question}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3 text-xs text-cei-blue">
+                    <span className="font-medium">Open tool</span>
+                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         <section aria-labelledby="available-tools-heading">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
