@@ -487,17 +487,21 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                   });
 
                   const n = sections.length;
-                  const bandH = 46;          // px per section band
-                  const height = n * bandH;
-                  const apexPad = 0.06;      // apex isn't a perfect point, leaves room for the top chip
+                  const bandH = 58;          // px per section band
+                  const fullW = 640;         // triangle base width (px)
+                  // Reserve a little apex above the first band so its chip has
+                  // room and doesn't sit in the point.
+                  const apexBands = 0.6;
+                  const totalBands = n + apexBands;
+                  const height = totalBands * bandH;
 
                   return (
-                    <div className="relative mx-auto" style={{ height, maxWidth: 520 }}>
+                    <div className="relative mx-auto" style={{ height, width: fullW, maxWidth: '100%' }}>
                       {/* Triangle outline + slice lines */}
                       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                         <polygon points={`50,0 100,100 0,100`} fill="none" stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
                         {sections.slice(1).map((_, r) => {
-                          const y = ((r + 1) / n) * 100;
+                          const y = ((apexBands + r + 1) / totalBands) * 100;
                           const half = (y / 100) * 50; // triangle half-width at this height
                           return (
                             <line key={r} x1={50 - half} y1={y} x2={50 + half} y2={y} stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
@@ -505,13 +509,20 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                         })}
                       </svg>
 
-                      {/* Section content, centered within each band */}
-                      <div className="absolute inset-0 flex flex-col">
-                        {sections.map((s, r) => (
+                      {/* Section content, each band clamped to the triangle's
+                          width at its narrowest (top) edge so nothing overflows
+                          the sloped sides. */}
+                      <div className="absolute inset-0 flex flex-col" style={{ paddingTop: `${apexBands * bandH}px` }}>
+                        {sections.map((s, r) => {
+                          // Fraction of full height at the TOP of this band.
+                          const topFrac = (apexBands + r) / totalBands;
+                          // Triangle width there, inset slightly so chips clear the edges.
+                          const bandMaxW = Math.max(96, topFrac * fullW - 16);
+                          return (
                           <div
                             key={`${s.anchor}-${r}`}
-                            className="flex flex-1 flex-col items-center justify-center gap-1 px-2"
-                            style={r === 0 ? { paddingTop: `${apexPad * bandH}px` } : undefined}
+                            className="mx-auto flex flex-1 flex-col items-center justify-center gap-1"
+                            style={{ maxWidth: `${bandMaxW}px`, width: '100%' }}
                           >
                             {(() => {
                               const isLeaf = s.anchorIndex === lineage.length - 1;
@@ -546,7 +557,8 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
