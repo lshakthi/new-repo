@@ -462,51 +462,36 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                   </div>
                 )}
 
-                {/* Indented hierarchy: a rank-label gutter keeps every name
-                    aligned, while recognized ranks step-indent to show nesting.
-                    A colored dot on a shared rail marks each rank; clades sit
-                    flush and muted. The organism is the highlighted final row. */}
-                <div className="relative">
+                {/* Top-down node tree: each rank is a centered box connected to
+                    the next by a vertical line (a single-chain org chart). Major
+                    ranks are colored boxes with their rank label; intermediate
+                    clades are compact connector chips between them. */}
+                <div className="flex flex-col items-center py-1">
                   {lineage.map((node, i) => {
                     const total = lineage.length;
                     const isLeaf = i === total - 1;
+                    const isRoot = i === 0;
                     const tier = rankFor(node, isLeaf);
-                    // Step indent only advances at recognized ranks, so the tree
-                    // nests meaningfully without runaway indentation from clades.
-                    const step = lineage.slice(0, i).filter((n) => rankFor(n, false)).length;
-                    const indent = Math.min(step, 7) * 14;
                     return (
-                      <div key={`${node}-${i}`} className="flex items-stretch">
-                        {/* rank-label gutter */}
-                        <div className="w-16 shrink-0 pr-2 text-right">
-                          {tier && (
-                            <span className={`text-[8px] font-bold uppercase tracking-wider ${tier.chip.split(' ').find((c) => c.startsWith('text-')) ?? 'text-text-tertiary'}`}>
-                              {tier.rank}
-                            </span>
-                          )}
-                        </div>
-                        {/* node + name, indented by depth */}
-                        <div className="flex items-center gap-2 py-0.5" style={{ paddingLeft: `${indent}px` }}>
-                          <span
-                            className={`shrink-0 rounded-full ${
+                      <div key={`${node}-${i}`} className="flex flex-col items-center">
+                        {/* connector line from the previous node */}
+                        {!isRoot && <span className="h-3 w-px bg-border-default" aria-hidden="true" />}
+                        {tier ? (
+                          <div
+                            className={`flex flex-col items-center rounded-lg border px-3 py-1.5 text-center shadow-sm ${
                               isLeaf
-                                ? 'h-2.5 w-2.5 bg-cei-gold ring-2 ring-cei-gold/30'
-                                : tier
-                                  ? `h-2 w-2 ${tier.dot}`
-                                  : 'h-1.5 w-1.5 bg-border-default'
+                                ? 'border-cei-gold/50 bg-cei-gold text-white'
+                                : `border-transparent ${tier.chip}`
                             }`}
-                            aria-hidden="true"
-                          />
-                          {isLeaf ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-md bg-cei-gold/12 px-2 py-0.5">
-                              <span className="text-[12px] font-semibold text-cei-navy">{node}</span>
-                            </span>
-                          ) : (
-                            <span className={`text-[11px] leading-4 ${tier ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
-                              {node}
-                            </span>
-                          )}
-                        </div>
+                          >
+                            <span className={`text-[8px] font-bold uppercase tracking-wider ${isLeaf ? 'text-white/80' : 'opacity-60'}`}>{tier.rank}</span>
+                            <span className="text-[12px] font-semibold leading-tight">{node}</span>
+                          </div>
+                        ) : (
+                          <span className="rounded-full border border-border-subtle bg-surface-elevated px-2 py-0.5 text-[10px] text-text-secondary">
+                            {node}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
