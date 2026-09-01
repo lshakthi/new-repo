@@ -381,37 +381,45 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-1.5">
                   <ListTree size={12} className="text-cei-blue" />
-                  <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · root to organism</p>
+                  <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · broad to specific</p>
                 </div>
                 <span className="text-[9px] text-text-tertiary">{result.lineage.length} ranks</span>
               </div>
-              {/* Clean vertical list: one continuous rail, numbered rank steps,
-                  and the resolved organism highlighted at the end. */}
-              <ol className="relative ml-1 border-l border-border-default/70">
+              {/* Breadcrumb "funnel": the lineage flows left→right as connected
+                  pills that deepen in color as they narrow from "all cellular
+                  organisms" down to the single resolved organism (gold). The
+                  color gradient makes "getting more specific" intuitive. */}
+              <div className="flex flex-wrap items-center gap-y-1.5">
                 {result.lineage.map((node, i) => {
-                  const isLeaf = i === result.lineage!.length - 1;
+                  const total = result.lineage!.length;
+                  const isLeaf = i === total - 1;
+                  // 0 → root (lightest), 1 → deepest blue near the organism.
+                  const t = total > 1 ? i / (total - 1) : 1;
                   return (
-                    <li key={`${node}-${i}`} className="relative flex items-center gap-2.5 py-[3px] pl-4">
-                      {/* node marker sitting on the rail */}
-                      <span
-                        className={`absolute -left-[5px] rounded-full ring-2 ring-surface-panel ${
-                          isLeaf ? 'h-2.5 w-2.5 bg-cei-gold' : 'h-2 w-2 bg-cei-blue-light'
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span className="w-5 shrink-0 text-right text-[9px] font-medium text-text-tertiary tabular-nums">{i + 1}</span>
+                    <span key={`${node}-${i}`} className="flex items-center">
                       {isLeaf ? (
-                        <span className="inline-flex items-center gap-2 rounded-md bg-cei-gold/10 px-2 py-0.5">
-                          <span className="text-[12px] font-semibold text-cei-navy">{node}</span>
-                          <span className="rounded-full bg-cei-gold/20 px-1.5 py-0.5 text-[9px] font-semibold text-cei-gold">organism</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-cei-gold px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+                          <Dna size={11} aria-hidden="true" /> {node}
                         </span>
                       ) : (
-                        <span className="text-[11px] leading-4 text-text-secondary">{node}</span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                          style={{
+                            // Blend from a very light blue tint toward CEI blue.
+                            backgroundColor: `rgba(27, 79, 114, ${0.05 + t * 0.22})`,
+                            color: t > 0.55 ? '#0f2b46' : '#1b4f72',
+                          }}
+                        >
+                          {node}
+                        </span>
                       )}
-                    </li>
+                      {!isLeaf && (
+                        <ArrowRight size={11} className="mx-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
+                      )}
+                    </span>
                   );
                 })}
-              </ol>
+              </div>
             </div>
           )}
 
