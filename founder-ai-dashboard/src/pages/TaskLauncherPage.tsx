@@ -234,7 +234,15 @@ export function TaskLauncherPage() {
                   </div>
                   <div className="flex-1 space-y-2 max-w-3xl">
                     <p className="text-sm text-text-secondary leading-relaxed">
-                      I mapped that to the <span className="font-medium text-text-primary">{getNcbiTool(msg.ncbiTool.toolId as NcbiToolId).name}</span> tool. Review the input, then run it.
+                      {msg.ncbiTool.autoRun ? (
+                        msg.ncbiTool.toolId === 'blast-sequence' ? (
+                          <>That looks like a nucleotide sequence, so I ran it through <span className="font-medium text-text-primary">NCBI BLAST</span> for you and pulled back the closest matching sequences, sorted by score. No need to open BLAST yourself.</>
+                        ) : (
+                          <>I sent that to the <span className="font-medium text-text-primary">{getNcbiTool(msg.ncbiTool.toolId as NcbiToolId).name}</span> tool and fetched the results for you.</>
+                        )
+                      ) : (
+                        <>I mapped that to the <span className="font-medium text-text-primary">{getNcbiTool(msg.ncbiTool.toolId as NcbiToolId).name}</span> tool. Review the input, then run it.</>
+                      )}
                     </p>
                     <NcbiToolCard
                       toolId={msg.ncbiTool.toolId as NcbiToolId}
@@ -296,18 +304,26 @@ export function TaskLauncherPage() {
             )}
             <form onSubmit={handleSend}>
               <div className="relative">
-                <input
-                  type="text"
+                <textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask a follow-up, or type / for NCBI tools..."
-                  className="w-full pl-4 pr-12 py-3 rounded-xl border border-border-subtle bg-surface-panel text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all"
-                  aria-label="Ask a follow-up"
+                  onKeyDown={(e) => {
+                    // Enter sends; Shift+Enter inserts a newline (so multi-line
+                    // sequences can be pasted/edited without submitting early).
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend(e);
+                    }
+                  }}
+                  rows={detectedTool === 'blast-sequence' ? 4 : 1}
+                  placeholder="Ask a follow-up, paste a nucleotide sequence, or type / for NCBI tools..."
+                  className={`w-full resize-y pl-4 pr-12 py-3 rounded-xl border border-border-subtle bg-surface-panel text-sm placeholder:text-text-tertiary focus:border-cei-blue-light focus:ring-2 focus:ring-cei-blue-light/20 transition-all ${detectedTool === 'blast-sequence' ? 'font-mono text-xs leading-5 break-all' : ''}`}
+                  aria-label="Ask a follow-up or paste a sequence"
                 />
                 <button
                   type="submit"
                   disabled={!inputValue.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cei-blue text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-cei-navy transition-colors"
+                  className="absolute right-2 top-2.5 p-2 rounded-lg bg-cei-blue text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-cei-navy transition-colors"
                   aria-label="Send"
                 >
                   <Send size={14} />
@@ -318,7 +334,10 @@ export function TaskLauncherPage() {
             <div className="mt-1.5 px-1">
               {detectedTool ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-cei-blue">
-                  <Dna size={11} /> Will run the {getNcbiTool(detectedTool).name} tool
+                  <Dna size={11} />
+                  {detectedTool === 'blast-sequence'
+                    ? 'Detected a sequence — I\u2019ll BLAST it and return the matching sequences automatically'
+                    : `Will run the ${getNcbiTool(detectedTool).name} tool`}
                 </span>
               ) : (
                 <span className="text-[11px] text-text-tertiary">
