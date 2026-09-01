@@ -29,6 +29,7 @@ function callNcbi(
   toolId: NcbiToolId,
   value: string,
   onProgress: (status: string) => void,
+  live?: boolean,
 ): Promise<NcbiToolResult> {
   switch (toolId) {
     case 'taxonomy-lineage':
@@ -36,7 +37,8 @@ function callNcbi(
     case 'sequence-search':
       return fetchSequenceSearch(value);
     case 'blast-sequence':
-      return fetchBlast(value, onProgress);
+      // Instant illustrative result by default; live (slow) BLAST only on demand.
+      return fetchBlast(value, onProgress, { live });
   }
 }
 
@@ -64,7 +66,7 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
   const runToken = useRef(0);
   const didAutoRun = useRef(false);
 
-  const execute = async (runToolId: NcbiToolId, runValue: string) => {
+  const execute = async (runToolId: NcbiToolId, runValue: string, live = false) => {
     if (!runValue.trim() || runState === 'running') return;
     const token = ++runToken.current;
     setExpandedRecord(null);
@@ -72,11 +74,15 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
     setLoadingOrigin(null);
     setRunState('running');
     setResult(null);
-    setStatus(runToolId === 'blast-sequence' ? 'Submitting to BLAST (this can take a while)' : 'Calling NCBI');
+    setStatus(
+      runToolId === 'blast-sequence' && live
+        ? 'Submitting to live BLAST (this can take a while)'
+        : 'Calling NCBI',
+    );
 
     const res = await callNcbi(runToolId, runValue, (s) => {
       if (token === runToken.current) setStatus(s);
-    });
+    }, live);
 
     // Ignore results from a superseded run.
     if (token !== runToken.current) return;
@@ -226,6 +232,19 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
             <p className="text-xs text-text-secondary mt-0.5 leading-5">{result.summary}</p>
             {result.notice && (
               <p className="text-[11px] text-text-tertiary mt-1 italic">{result.notice}</p>
+            )}
+            {/* Opt-in to the slow, live BLAST when the shown result is illustrative. */}
+            {result.toolId === 'blast-sequence' && !result.live && (
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => execute('blast-sequence', value, true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cei-blue/30 px-2.5 py-1.5 text-[11px] font-medium text-cei-blue hover:bg-cei-blue/5 transition-colors"
+                >
+                  <Play size={11} /> Run live BLAST
+                </button>
+                <span className="text-[11px] text-text-tertiary">Queries NCBI directly; can take 15–40s.</span>
+              </div>
             )}
           </div>
 

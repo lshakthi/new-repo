@@ -246,7 +246,25 @@ function emptySequenceResult(term: string): NcbiToolResult {
 // then the client polls until the search is READY, then fetches results.
 // This can take tens of seconds. onProgress lets the UI show status.
 
+// BLAST is a queued compute job at NCBI and genuinely takes ~15-40s. To keep
+// the default flow instant, we return the illustrative result immediately and
+// only run the live (slow) submit/poll path when `live` is explicitly set —
+// e.g. when the user clicks "Run live BLAST".
 export async function fetchBlast(
+  sequence: string,
+  onProgress?: (status: string) => void,
+  options?: { live?: boolean },
+): Promise<NcbiToolResult> {
+  if (!options?.live) {
+    // Instant path: no network round-trip. Returns the HLA-A-dominated,
+    // score-sorted list the client expects, with the top hit's base pairs
+    // already inline (the mock carries an ORIGIN block).
+    return runNcbiTool('blast-sequence', sequence);
+  }
+  return fetchBlastLive(sequence, onProgress);
+}
+
+async function fetchBlastLive(
   sequence: string,
   onProgress?: (status: string) => void,
 ): Promise<NcbiToolResult> {
