@@ -176,6 +176,10 @@ export interface NcbiToolResult {
   /** Deep link to inspect the same query on the public NCBI site. */
   sourceUrl: string;
   sourceLabel: string;
+  /** True when the result came from a live NCBI API call. */
+  live?: boolean;
+  /** Optional notice, e.g. when falling back to illustrative data. */
+  notice?: string;
 }
 
 // ─── Mock runners ────────────────────────────────────────────

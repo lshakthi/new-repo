@@ -12,11 +12,9 @@ import {
   ListTree,
 } from 'lucide-react';
 import { ProvenanceTrail } from '../design-system';
-import {
-  getNcbiTool,
-  runNcbiTool,
-} from '../mocks/ncbiTools';
+import { getNcbiTool } from '../mocks/ncbiTools';
 import type { NcbiToolId, NcbiToolResult } from '../mocks/ncbiTools';
+import { fetchBlast, fetchSequenceOrigin, fetchSequenceSearch, fetchTaxonomy } from '../mocks/ncbiApi';
 
 type RunState = 'idle' | 'running' | 'success';
 
@@ -26,7 +24,21 @@ const toolIcon: Record<NcbiToolId, typeof Dna> = {
   'blast-sequence': Dna,
 };
 
-const stages = ['Interpreting request', 'Building query', 'Calling NCBI', 'Normalizing results'];
+// Run a tool against the live NCBI APIs (with mock fallback inside ncbiApi).
+function callNcbi(
+  toolId: NcbiToolId,
+  value: string,
+  onProgress: (status: string) => void,
+): Promise<NcbiToolResult> {
+  switch (toolId) {
+    case 'taxonomy-lineage':
+      return fetchTaxonomy(value);
+    case 'sequence-search':
+      return fetchSequenceSearch(value);
+    case 'blast-sequence':
+      return fetchBlast(value, onProgress);
+  }
+}
 
 interface NcbiToolCardProps {
   toolId: NcbiToolId;
@@ -42,34 +54,34 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
   const tool = getNcbiTool(activeToolId);
   const [value, setValue] = useState((initialValue ?? '').trim() || getNcbiTool(toolId).example);
   const [runState, setRunState] = useState<RunState>('idle');
-  const [stageIndex, setStageIndex] = useState(0);
   const [result, setResult] = useState<NcbiToolResult | null>(null);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
-  const timers = useRef<number[]>([]);
+  // ORIGIN base pairs fetched on demand, keyed by accession. `null` = fetched
+  // but unavailable; a string = the sequence to show in-app.
+  const [origins, setOrigins] = useState<Record<string, string | null>>({});
+  const [loadingOrigin, setLoadingOrigin] = useState<string | null>(null);
+  const [status, setStatus] = useState('Calling NCBI');
+  const runToken = useRef(0);
   const didAutoRun = useRef(false);
 
-  const clearTimers = () => {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-  };
-  useEffect(() => clearTimers, []);
-
-  const execute = (runToolId: NcbiToolId, runValue: string) => {
+  const execute = async (runToolId: NcbiToolId, runValue: string) => {
     if (!runValue.trim() || runState === 'running') return;
-    clearTimers();
+    const token = ++runToken.current;
     setExpandedRecord(null);
+    setOrigins({});
+    setLoadingOrigin(null);
     setRunState('running');
-    setStageIndex(0);
     setResult(null);
-    stages.slice(1).forEach((_, i) => {
-      timers.current.push(window.setTimeout(() => setStageIndex(i + 1), 480 * (i + 1)));
+    setStatus(runToolId === 'blast-sequence' ? 'Submitting to BLAST (this can take a while)' : 'Calling NCBI');
+
+    const res = await callNcbi(runToolId, runValue, (s) => {
+      if (token === runToken.current) setStatus(s);
     });
-    timers.current.push(
-      window.setTimeout(() => {
-        setResult(runNcbiTool(runToolId, runValue));
-        setRunState('success');
-      }, 480 * stages.length),
-    );
+
+    // Ignore results from a superseded run.
+    if (token !== runToken.current) return;
+    setResult(res);
+    setRunState('success');
   };
 
   // Pivot the card to a different NCBI tool (e.g. list a taxon's sequences),
@@ -78,6 +90,21 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
     setActiveToolId(nextToolId);
     setValue(nextValue);
     execute(nextToolId, nextValue);
+  };
+
+  // Expand a record and, if we don't already have its sequence, pull the
+  // base pairs from NCBI so the user reads them in-app (no link-out needed).
+  const toggleRecord = async (accession: string, presetOrigin?: string) => {
+    if (expandedRecord === accession) {
+      setExpandedRecord(null);
+      return;
+    }
+    setExpandedRecord(accession);
+    if (presetOrigin || origins[accession] !== undefined) return;
+    setLoadingOrigin(accession);
+    const origin = await fetchSequenceOrigin(accession);
+    setOrigins((prev) => ({ ...prev, [accession]: origin }));
+    setLoadingOrigin(null);
   };
 
   useEffect(() => {
@@ -167,30 +194,13 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
         </div>
       </form>
 
-      {/* Running stages */}
+      {/* Live status */}
       {runState === 'running' && (
         <div className="px-4 pb-4" aria-live="polite" aria-busy="true">
-          <ol className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            {stages.map((stage, i) => {
-              const complete = i < stageIndex;
-              const active = i === stageIndex;
-              return (
-                <li
-                  key={stage}
-                  className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[10px] ${
-                    active ? 'border-cei-blue/30 bg-cei-blue/5 text-cei-blue'
-                      : complete ? 'border-success/20 bg-success-bg text-success'
-                      : 'border-border-subtle text-text-tertiary'
-                  }`}
-                >
-                  <span className="grid h-4 w-4 place-items-center rounded-full border border-current shrink-0">
-                    {complete ? <Check size={9} /> : i + 1}
-                  </span>
-                  <span className="truncate">{stage}</span>
-                </li>
-              );
-            })}
-          </ol>
+          <div className="flex items-center gap-2 rounded-lg border border-cei-blue/20 bg-cei-blue/5 px-3 py-2.5 text-xs text-cei-blue">
+            <LoaderCircle size={14} className="animate-spin shrink-0" />
+            <span>{status}…</span>
+          </div>
         </div>
       )}
 
@@ -198,13 +208,25 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
       {runState === 'success' && result && (
         <div className="px-4 pb-4 space-y-3 border-t border-border-subtle pt-3">
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1">
               <span className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-[10px] font-medium text-success">
                 <Check size={10} /> Done · {result.totalDuration}
               </span>
+              {result.live ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-cei-blue/10 px-2 py-0.5 text-[10px] font-medium text-cei-blue">
+                  Live from NCBI
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-evidence-moderate/10 px-2 py-0.5 text-[10px] font-medium text-evidence-moderate">
+                  Illustrative data
+                </span>
+              )}
             </div>
             <p className="text-sm font-semibold text-text-primary">{result.headline}</p>
             <p className="text-xs text-text-secondary mt-0.5 leading-5">{result.summary}</p>
+            {result.notice && (
+              <p className="text-[11px] text-text-tertiary mt-1 italic">{result.notice}</p>
+            )}
           </div>
 
           {/* Taxonomy: key facts + lineage */}
@@ -267,6 +289,12 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
             <div className="space-y-1.5">
               {result.records.map((rec) => {
                 const isOpen = expandedRecord === rec.accession;
+                // Prefer an ORIGIN that came with the result, else one we
+                // fetched on demand. `null` means fetched-but-unavailable.
+                const fetched = origins[rec.accession];
+                const originText = rec.origin ?? (fetched ?? undefined);
+                const isLoading = loadingOrigin === rec.accession;
+                const unavailable = !rec.origin && fetched === null;
                 return (
                   <div
                     key={rec.accession}
@@ -285,22 +313,20 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                         </div>
                         <p className="mt-1 text-xs leading-5 text-text-primary">{rec.title}</p>
                         <div className="mt-1.5 flex items-center gap-3">
-                          {rec.origin && (
-                            <button
-                              type="button"
-                              onClick={() => setExpandedRecord(isOpen ? null : rec.accession)}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-cei-blue hover:text-cei-navy"
-                              aria-expanded={isOpen}
-                            >
-                              {isOpen ? 'Hide ORIGIN' : 'View ORIGIN'}
-                              <ArrowRight size={11} className={`transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => toggleRecord(rec.accession, rec.origin)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-cei-blue hover:text-cei-navy"
+                            aria-expanded={isOpen}
+                          >
+                            {isOpen ? 'Hide sequence' : 'View sequence'}
+                            <ArrowRight size={11} className={`transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                          </button>
                           <a
                             href={rec.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-cei-blue hover:text-cei-navy"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-text-tertiary hover:text-cei-blue"
                           >
                             GenBank record <ExternalLink size={10} />
                           </a>
@@ -308,11 +334,25 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                       </div>
                     </div>
 
-                    {/* GenBank ORIGIN base pairs */}
-                    {isOpen && rec.origin && (
+                    {/* Sequence (GenBank ORIGIN) shown inline — no link-out needed */}
+                    {isOpen && (
                       <div className="border-t border-border-subtle px-3 py-2.5">
                         <p className="text-[9px] uppercase tracking-wider text-text-tertiary mb-1.5">ORIGIN — nucleotide base pairs</p>
-                        <pre className="overflow-x-auto rounded-md bg-surface-panel px-3 py-2 font-mono text-[10px] leading-4 text-text-secondary">{rec.origin}</pre>
+                        {isLoading ? (
+                          <div className="flex items-center gap-2 rounded-md bg-surface-panel px-3 py-2 text-[11px] text-text-secondary">
+                            <LoaderCircle size={12} className="animate-spin shrink-0" /> Fetching sequence from NCBI…
+                          </div>
+                        ) : originText ? (
+                          <pre className="overflow-x-auto rounded-md bg-surface-panel px-3 py-2 font-mono text-[10px] leading-4 text-text-secondary">{originText}</pre>
+                        ) : unavailable ? (
+                          <p className="text-[11px] text-text-tertiary italic">
+                            Sequence could not be retrieved in-app.{' '}
+                            <a href={rec.url} target="_blank" rel="noreferrer" className="text-cei-blue hover:text-cei-navy underline">
+                              Open the GenBank record
+                            </a>{' '}
+                            to view it.
+                          </p>
+                        ) : null}
                       </div>
                     )}
                   </div>
