@@ -39,17 +39,17 @@ const flowAccent: Record<NcbiToolId, { bar: string; tint: string; chip: string; 
     label: 'Taxonomy',
   },
   'sequence-search': {
-    bar: 'bg-teal-600',
-    tint: 'bg-teal-600/10 text-teal-700',
-    chip: 'bg-teal-600/10 text-teal-700',
-    grad: 'from-teal-500/8 to-transparent',
+    bar: 'bg-teal-500/70',
+    tint: 'bg-teal-500/10 text-teal-700',
+    chip: 'bg-teal-500/10 text-teal-700',
+    grad: 'from-teal-500/6 to-transparent',
     label: 'Nucleotide records',
   },
   'blast-sequence': {
-    bar: 'bg-indigo-600',
-    tint: 'bg-indigo-600/10 text-indigo-700',
-    chip: 'bg-indigo-600/10 text-indigo-700',
-    grad: 'from-indigo-500/8 to-transparent',
+    bar: 'bg-indigo-500/70',
+    tint: 'bg-indigo-500/10 text-indigo-700',
+    chip: 'bg-indigo-500/10 text-indigo-700',
+    grad: 'from-indigo-500/6 to-transparent',
     label: 'Alignment hits',
   },
 };
@@ -66,14 +66,17 @@ interface RankTier {
   chip: string;  // pill bg + text
 }
 
+// A calm, balanced scale that eases from cool (broad ranks) to warm (specific
+// ranks): indigo → sky → teal → sage → soft amber → clay → dusty rose → gold.
+// Soft -50/-100 fills with muted -700 text keep it low-key, not neon.
 const RANK_TIERS: Record<string, RankTier> = {
-  domain: { rank: 'Domain', dot: 'bg-violet-500', chip: 'bg-violet-100 text-violet-800' },
-  kingdom: { rank: 'Kingdom', dot: 'bg-sky-500', chip: 'bg-sky-100 text-sky-800' },
-  phylum: { rank: 'Phylum', dot: 'bg-teal-500', chip: 'bg-teal-100 text-teal-800' },
-  class: { rank: 'Class', dot: 'bg-emerald-500', chip: 'bg-emerald-100 text-emerald-800' },
-  order: { rank: 'Order', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-800' },
-  family: { rank: 'Family', dot: 'bg-orange-500', chip: 'bg-orange-100 text-orange-800' },
-  genus: { rank: 'Genus', dot: 'bg-rose-500', chip: 'bg-rose-100 text-rose-800' },
+  domain: { rank: 'Domain', dot: 'bg-indigo-300', chip: 'bg-indigo-50 text-indigo-700' },
+  kingdom: { rank: 'Kingdom', dot: 'bg-sky-300', chip: 'bg-sky-50 text-sky-700' },
+  phylum: { rank: 'Phylum', dot: 'bg-teal-300', chip: 'bg-teal-50 text-teal-700' },
+  class: { rank: 'Class', dot: 'bg-emerald-300', chip: 'bg-emerald-50 text-emerald-700' },
+  order: { rank: 'Order', dot: 'bg-amber-300', chip: 'bg-amber-50 text-amber-700' },
+  family: { rank: 'Family', dot: 'bg-orange-300', chip: 'bg-orange-50 text-orange-700' },
+  genus: { rank: 'Genus', dot: 'bg-rose-300', chip: 'bg-rose-50 text-rose-700' },
   species: { rank: 'Species', dot: 'bg-cei-gold', chip: 'bg-cei-gold text-white' },
 };
 
@@ -109,20 +112,23 @@ function rankFor(name: string, isLeaf: boolean): RankTier | null {
 }
 
 // Color a nucleotide string by base (A/C/G/T/U) for the ORIGIN viewer.
+// Muted, balanced tones (sage / soft blue / warm sand / dusty clay) read
+// clearly on the dark terminal without the neon feel of saturated colors.
 const BASE_COLOR: Record<string, string> = {
-  a: 'text-emerald-600',
-  c: 'text-blue-600',
-  g: 'text-amber-600',
-  t: 'text-rose-600',
-  u: 'text-fuchsia-600',
+  a: 'text-emerald-300',
+  c: 'text-sky-300',
+  g: 'text-amber-200',
+  t: 'text-rose-300',
+  u: 'text-fuchsia-200',
 };
 
 // Strength color for the BLAST identity gauge, from percent identity.
+// Softened one shade so the bars feel calm rather than alarming.
 function identityTone(pct: number): { bar: string; text: string } {
-  if (pct >= 98) return { bar: 'bg-emerald-500', text: 'text-emerald-700' };
-  if (pct >= 90) return { bar: 'bg-lime-500', text: 'text-lime-700' };
-  if (pct >= 80) return { bar: 'bg-amber-500', text: 'text-amber-700' };
-  return { bar: 'bg-orange-500', text: 'text-orange-700' };
+  if (pct >= 98) return { bar: 'bg-teal-400', text: 'text-teal-700' };
+  if (pct >= 90) return { bar: 'bg-emerald-400', text: 'text-emerald-700' };
+  if (pct >= 80) return { bar: 'bg-amber-300', text: 'text-amber-700' };
+  return { bar: 'bg-orange-300', text: 'text-orange-700' };
 }
 
 // Render an ORIGIN block on a dark terminal, coloring each base while leaving
@@ -603,14 +609,14 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                       {isBlast ? (
                         <div
                           className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
-                            isTop ? 'bg-cei-gold text-white' : 'bg-indigo-600/10 text-indigo-700'
+                            isTop ? 'bg-cei-gold text-white' : 'bg-indigo-500/10 text-indigo-600'
                           }`}
                           aria-hidden="true"
                         >
                           {isTop ? <Crown size={13} /> : idx + 1}
                         </div>
                       ) : (
-                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal-600/10 text-teal-700" aria-hidden="true">
+                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal-500/10 text-teal-600" aria-hidden="true">
                           <Dna size={14} />
                         </div>
                       )}
