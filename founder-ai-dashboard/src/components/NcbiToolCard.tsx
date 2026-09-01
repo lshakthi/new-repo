@@ -54,6 +54,60 @@ const flowAccent: Record<NcbiToolId, { bar: string; tint: string; chip: string; 
   },
 };
 
+// ─── Taxonomic rank classification ───────────────────────────
+// NCBI lineage nodes arrive as a flat list of names without ranks. We map the
+// well-known major-rank taxon names to the Linnaean rank they represent, each
+// with its own color, so the lineage reads as categorized levels (Domain →
+// Kingdom → … → Species) rather than an undifferentiated chain. Names not in
+// the map are intermediate clades shown in a neutral tint.
+interface RankTier {
+  rank: string;
+  dot: string;   // marker/legend swatch bg
+  chip: string;  // pill bg + text
+}
+
+const RANK_TIERS: Record<string, RankTier> = {
+  domain: { rank: 'Domain', dot: 'bg-violet-500', chip: 'bg-violet-100 text-violet-800' },
+  kingdom: { rank: 'Kingdom', dot: 'bg-sky-500', chip: 'bg-sky-100 text-sky-800' },
+  phylum: { rank: 'Phylum', dot: 'bg-teal-500', chip: 'bg-teal-100 text-teal-800' },
+  class: { rank: 'Class', dot: 'bg-emerald-500', chip: 'bg-emerald-100 text-emerald-800' },
+  order: { rank: 'Order', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-800' },
+  family: { rank: 'Family', dot: 'bg-orange-500', chip: 'bg-orange-100 text-orange-800' },
+  genus: { rank: 'Genus', dot: 'bg-rose-500', chip: 'bg-rose-100 text-rose-800' },
+  species: { rank: 'Species', dot: 'bg-cei-gold', chip: 'bg-cei-gold text-white' },
+};
+
+// Which lineage node name anchors each major rank (for the common vertebrate
+// lineage). Matched case-insensitively; the final node is always Species.
+const RANK_BY_NAME: Record<string, keyof typeof RANK_TIERS> = {
+  eukaryota: 'domain',
+  bacteria: 'domain',
+  archaea: 'domain',
+  metazoa: 'kingdom',
+  viridiplantae: 'kingdom',
+  fungi: 'kingdom',
+  chordata: 'phylum',
+  arthropoda: 'phylum',
+  mammalia: 'class',
+  aves: 'class',
+  'actinopteri': 'class',
+  insecta: 'class',
+  primates: 'order',
+  rodentia: 'order',
+  carnivora: 'order',
+  hominidae: 'family',
+  muridae: 'family',
+  homo: 'genus',
+  mus: 'genus',
+  pan: 'genus',
+};
+
+function rankFor(name: string, isLeaf: boolean): RankTier | null {
+  if (isLeaf) return RANK_TIERS.species;
+  const key = RANK_BY_NAME[name.trim().toLowerCase()];
+  return key ? RANK_TIERS[key] : null;
+}
+
 // Color a nucleotide string by base (A/C/G/T/U) for the ORIGIN viewer.
 const BASE_COLOR: Record<string, string> = {
   a: 'text-emerald-600',
@@ -376,52 +430,66 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
               <span className="text-[11px] font-medium text-cei-blue">Open list</span>
             </button>
           )}
-          {result.lineage && (
-            <div className="rounded-lg border border-border-subtle bg-surface-panel/40 px-4 py-3">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-1.5">
-                  <ListTree size={12} className="text-cei-blue" />
-                  <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · broad to specific</p>
+          {result.lineage && (() => {
+            const lineage = result.lineage;
+            // Collect the major ranks present, in lineage order, for the legend.
+            const tiersPresent = lineage
+              .map((n, i) => rankFor(n, i === lineage.length - 1))
+              .filter((t, i, arr): t is RankTier => !!t && arr.findIndex((x) => x?.rank === t?.rank) === i);
+            return (
+              <div className="rounded-lg border border-border-subtle bg-surface-panel/40 px-4 py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <ListTree size={12} className="text-cei-blue" />
+                    <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · classified by rank</p>
+                  </div>
+                  <span className="text-[9px] text-text-tertiary">{lineage.length} levels</span>
                 </div>
-                <span className="text-[9px] text-text-tertiary">{result.lineage.length} ranks</span>
-              </div>
-              {/* Breadcrumb "funnel": the lineage flows left→right as connected
-                  pills that deepen in color as they narrow from "all cellular
-                  organisms" down to the single resolved organism (gold). The
-                  color gradient makes "getting more specific" intuitive. */}
-              <div className="flex flex-wrap items-center gap-y-1.5">
-                {result.lineage.map((node, i) => {
-                  const total = result.lineage!.length;
-                  const isLeaf = i === total - 1;
-                  // 0 → root (lightest), 1 → deepest blue near the organism.
-                  const t = total > 1 ? i / (total - 1) : 1;
-                  return (
-                    <span key={`${node}-${i}`} className="flex items-center">
-                      {isLeaf ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-cei-gold px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
-                          <Dna size={11} aria-hidden="true" /> {node}
-                        </span>
-                      ) : (
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                          style={{
-                            // Blend from a very light blue tint toward CEI blue.
-                            backgroundColor: `rgba(27, 79, 114, ${0.05 + t * 0.22})`,
-                            color: t > 0.55 ? '#0f2b46' : '#1b4f72',
-                          }}
-                        >
-                          {node}
-                        </span>
-                      )}
-                      {!isLeaf && (
-                        <ArrowRight size={11} className="mx-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
-                      )}
+
+                {/* Rank legend: one swatch per major rank present. */}
+                {tiersPresent.length > 0 && (
+                  <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {tiersPresent.map((t) => (
+                      <span key={t.rank} className="inline-flex items-center gap-1">
+                        <span className={`h-2 w-2 rounded-full ${t.dot}`} aria-hidden="true" />
+                        <span className="text-[9px] font-medium text-text-secondary">{t.rank}</span>
+                      </span>
+                    ))}
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-border-default" aria-hidden="true" />
+                      <span className="text-[9px] text-text-tertiary">intermediate clade</span>
                     </span>
-                  );
-                })}
+                  </div>
+                )}
+
+                {/* Breadcrumb flow: recognized ranks get their rank color + a
+                    small rank label; intermediate clades stay neutral. */}
+                <div className="flex flex-wrap items-center gap-y-1.5">
+                  {lineage.map((node, i) => {
+                    const isLeaf = i === lineage.length - 1;
+                    const tier = rankFor(node, isLeaf);
+                    return (
+                      <span key={`${node}-${i}`} className="flex items-center">
+                        {tier ? (
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${tier.chip} ${tier.rank === 'Species' ? 'shadow-sm' : ''}`}>
+                            <span className="text-[8px] font-bold uppercase tracking-wide opacity-70">{tier.rank}</span>
+                            <span className="text-[11px] font-semibold">{node}</span>
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-border-subtle/70 px-2 py-0.5 text-[10px] text-text-secondary">
+                            {node}
+                          </span>
+                        )}
+                        {!isLeaf && (
+                          <ArrowRight size={11} className="mx-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Records: BLAST hits render as a ranked leaderboard, sequence-search
               records as DNA-accented cards. Both share the ORIGIN viewer. */}
