@@ -16,8 +16,14 @@ import { runNcbiTool, sanitizeNucleotides } from './ncbiTools';
 // dead-ends. Failures are surfaced via result.live = false + result.notice.
 // ─────────────────────────────────────────────────────────────
 
-const EUTILS = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
-const BLAST = 'https://blast.ncbi.nlm.nih.gov/Blast.cgi';
+// In the browser we route through the Vite dev proxy (see vite.config.ts) so
+// calls are same-origin. This is what makes the BLAST flow work in-app: the
+// public BLAST endpoint sends no CORS headers, so a direct browser call is
+// blocked and the app would otherwise fall back to illustrative data.
+// Outside the browser (or if the proxy is absent) we use the public URLs.
+const USE_PROXY = typeof window !== 'undefined';
+const EUTILS = USE_PROXY ? '/ncbi-eutils' : 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+const BLAST = USE_PROXY ? '/ncbi-blast' : 'https://blast.ncbi.nlm.nih.gov/Blast.cgi';
 // Identify the client to NCBI per their usage guidelines.
 const TOOL = 'founder-ai-dashboard';
 const EMAIL = 'support@founder-ai.example';
