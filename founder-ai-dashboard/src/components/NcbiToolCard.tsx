@@ -462,53 +462,82 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                   </div>
                 )}
 
-                {/* Pyramid layout: the same node boxes, but chunked into rows
-                    of increasing width (1, 2, 3, 4 … nodes per row) so the whole
-                    lineage forms a downward-widening pyramid that fits without
-                    scrolling. Rows are connected by a short vertical line. */}
+                {/* Triangle pyramid: the lineage is grouped into rank
+                    "sections" (a major rank plus the clades beneath it). An SVG
+                    draws the triangle outline and horizontal slice lines between
+                    sections; each section's rank chip + clades sit centered in
+                    its band. Broadest rank at the apex, organism at the base. */}
                 {(() => {
-                  // Chunk the lineage into rows of size 1, 2, 3, 4, …
-                  const rows: { node: string; index: number }[][] = [];
-                  let cursor = 0;
-                  let rowSize = 1;
-                  while (cursor < lineage.length) {
-                    rows.push(
-                      lineage.slice(cursor, cursor + rowSize).map((node, k) => ({ node, index: cursor + k })),
-                    );
-                    cursor += rowSize;
-                    rowSize += 1;
-                  }
+                  // Group into sections anchored by each recognized rank (the
+                  // leaf/species is its own final section).
+                  interface Section { tier: RankTier; anchor: string; anchorIndex: number; clades: string[]; }
+                  const sections: Section[] = [];
+                  lineage.forEach((node, i) => {
+                    const isLeaf = i === lineage.length - 1;
+                    const tier = rankFor(node, isLeaf);
+                    if (tier) {
+                      sections.push({ tier, anchor: node, anchorIndex: i, clades: [] });
+                    } else if (sections.length > 0) {
+                      sections[sections.length - 1].clades.push(node);
+                    } else {
+                      // Clades before the first recognized rank (e.g. "cellular
+                      // organisms") seed an untitled root section.
+                      sections.push({ tier: { rank: 'Root', dot: 'bg-border-default', chip: 'bg-border-subtle text-text-secondary' }, anchor: node, anchorIndex: i, clades: [] });
+                    }
+                  });
+
+                  const n = sections.length;
+                  const bandH = 46;          // px per section band
+                  const height = n * bandH;
+                  const apexPad = 0.06;      // apex isn't a perfect point, leaves room for the top chip
+
                   return (
-                    <div className="flex flex-col items-center py-1">
-                      {rows.map((row, r) => (
-                        <div key={r} className="flex flex-col items-center">
-                          {r > 0 && <span className="h-2.5 w-px bg-border-default" aria-hidden="true" />}
-                          <div className="flex flex-wrap items-stretch justify-center gap-1.5">
-                            {row.map(({ node, index }) => {
-                              const isLeaf = index === lineage.length - 1;
-                              const tier = rankFor(node, isLeaf);
-                              return tier ? (
+                    <div className="relative mx-auto" style={{ height, maxWidth: 520 }}>
+                      {/* Triangle outline + slice lines */}
+                      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                        <polygon points={`50,0 100,100 0,100`} fill="none" stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+                        {sections.slice(1).map((_, r) => {
+                          const y = ((r + 1) / n) * 100;
+                          const half = (y / 100) * 50; // triangle half-width at this height
+                          return (
+                            <line key={r} x1={50 - half} y1={y} x2={50 + half} y2={y} stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Section content, centered within each band */}
+                      <div className="absolute inset-0 flex flex-col">
+                        {sections.map((s, r) => (
+                          <div
+                            key={`${s.anchor}-${r}`}
+                            className="flex flex-1 flex-col items-center justify-center gap-1 px-2"
+                            style={r === 0 ? { paddingTop: `${apexPad * bandH}px` } : undefined}
+                          >
+                            {(() => {
+                              const isLeaf = s.anchorIndex === lineage.length - 1;
+                              return (
                                 <div
-                                  key={`${node}-${index}`}
-                                  className={`flex flex-col items-center rounded-lg border px-2.5 py-1 text-center shadow-sm ${
-                                    isLeaf ? 'border-cei-gold/50 bg-cei-gold text-white' : `border-transparent ${tier.chip}`
+                                  className={`flex flex-col items-center rounded-lg px-2.5 py-0.5 text-center shadow-sm ${
+                                    isLeaf ? 'bg-cei-gold text-white' : s.tier.chip
                                   }`}
                                 >
-                                  <span className={`text-[7px] font-bold uppercase tracking-wider ${isLeaf ? 'text-white/80' : 'opacity-60'}`}>{tier.rank}</span>
-                                  <span className="text-[11px] font-semibold leading-tight">{node}</span>
+                                  <span className={`text-[7px] font-bold uppercase tracking-wider ${isLeaf ? 'text-white/80' : 'opacity-60'}`}>{s.tier.rank}</span>
+                                  <span className="text-[11px] font-semibold leading-tight">{s.anchor}</span>
                                 </div>
-                              ) : (
-                                <span
-                                  key={`${node}-${index}`}
-                                  className="flex items-center rounded-full border border-border-subtle bg-surface-elevated px-2 py-0.5 text-[10px] text-text-secondary"
-                                >
-                                  {node}
-                                </span>
                               );
-                            })}
+                            })()}
+                            {s.clades.length > 0 && (
+                              <div className="flex flex-wrap items-center justify-center gap-1">
+                                {s.clades.map((c) => (
+                                  <span key={c} className="rounded-full bg-surface-elevated/90 px-1.5 py-0.5 text-[9px] text-text-tertiary shadow-sm">
+                                    {c}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   );
                 })()}
