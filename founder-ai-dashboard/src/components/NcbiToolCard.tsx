@@ -448,7 +448,7 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
 
                 {/* Rank legend: one swatch per major rank present. */}
                 {tiersPresent.length > 0 && (
-                  <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                     {tiersPresent.map((t) => (
                       <span key={t.rank} className="inline-flex items-center gap-1">
                         <span className={`h-2 w-2 rounded-full ${t.dot}`} aria-hidden="true" />
@@ -457,35 +457,45 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                     ))}
                     <span className="inline-flex items-center gap-1">
                       <span className="h-2 w-2 rounded-full bg-border-default" aria-hidden="true" />
-                      <span className="text-[9px] text-text-tertiary">intermediate clade</span>
+                      <span className="text-[9px] text-text-tertiary">clade</span>
                     </span>
                   </div>
                 )}
 
-                {/* Breadcrumb flow: recognized ranks get their rank color + a
-                    small rank label; intermediate clades stay neutral. */}
-                <div className="flex flex-wrap items-center gap-y-1.5">
+                {/* Pyramid: rows stack broadest→narrowest. Each row's width
+                    tapers with depth, forming a downward-narrowing pyramid that
+                    ends at the single organism (gold tip). Recognized ranks get
+                    their color + label; clades are slim neutral bands. */}
+                <div className="flex flex-col items-center gap-1">
                   {lineage.map((node, i) => {
-                    const isLeaf = i === lineage.length - 1;
+                    const total = lineage.length;
+                    const isLeaf = i === total - 1;
                     const tier = rankFor(node, isLeaf);
+                    // Taper width from 100% (root) down to ~34% (organism tip).
+                    const width = total > 1 ? 100 - (i / (total - 1)) * 66 : 100;
                     return (
-                      <span key={`${node}-${i}`} className="flex items-center">
+                      <div
+                        key={`${node}-${i}`}
+                        className={`flex items-center justify-center gap-2 rounded-md px-3 text-center transition-colors ${
+                          tier
+                            ? `${tier.chip} ${isLeaf ? 'py-1.5 shadow-sm ring-1 ring-cei-gold/40' : 'py-1'}`
+                            : 'bg-border-subtle/60 py-0.5 text-text-secondary'
+                        }`}
+                        style={{ width: `${width}%`, minWidth: '120px' }}
+                      >
                         {tier ? (
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${tier.chip} ${tier.rank === 'Species' ? 'shadow-sm' : ''}`}>
-                            <span className="text-[8px] font-bold uppercase tracking-wide opacity-70">{tier.rank}</span>
-                            <span className="text-[11px] font-semibold">{node}</span>
-                          </span>
+                          <>
+                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">{tier.rank}</span>
+                            <span className={`${isLeaf ? 'text-[12px]' : 'text-[11px]'} font-semibold`}>{node}</span>
+                          </>
                         ) : (
-                          <span className="rounded-full bg-border-subtle/70 px-2 py-0.5 text-[10px] text-text-secondary">
-                            {node}
-                          </span>
+                          <span className="text-[10px]">{node}</span>
                         )}
-                        {!isLeaf && (
-                          <ArrowRight size={11} className="mx-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
-                        )}
-                      </span>
+                      </div>
                     );
                   })}
+                  {/* pyramid tip */}
+                  <div className="h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-cei-gold" aria-hidden="true" />
                 </div>
               </div>
             );
