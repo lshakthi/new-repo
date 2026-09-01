@@ -515,13 +515,23 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                           >
                             {(() => {
                               const isLeaf = s.anchorIndex === lineage.length - 1;
+                              if (isLeaf) {
+                                // The resolved species stands out: a circular
+                                // gold badge with a ring halo + DNA glyph, set
+                                // clearly apart from the flat rank chips above.
+                                return (
+                                  <div className="flex flex-col items-center gap-1">
+                                    <span className="text-[7px] font-bold uppercase tracking-wider text-cei-gold">{s.tier.rank}</span>
+                                    <div className="flex items-center gap-1.5 rounded-full bg-cei-gold px-3 py-1.5 text-white shadow-md ring-2 ring-cei-gold/30 ring-offset-2 ring-offset-surface-elevated">
+                                      <Dna size={12} aria-hidden="true" />
+                                      <span className="text-[12px] font-bold leading-tight">{s.anchor}</span>
+                                    </div>
+                                  </div>
+                                );
+                              }
                               return (
-                                <div
-                                  className={`flex flex-col items-center rounded-lg px-2.5 py-0.5 text-center shadow-sm ${
-                                    isLeaf ? 'bg-cei-gold text-white' : s.tier.chip
-                                  }`}
-                                >
-                                  <span className={`text-[7px] font-bold uppercase tracking-wider ${isLeaf ? 'text-white/80' : 'opacity-60'}`}>{s.tier.rank}</span>
+                                <div className={`flex flex-col items-center rounded-lg px-2.5 py-0.5 text-center shadow-sm ${s.tier.chip}`}>
+                                  <span className="text-[7px] font-bold uppercase tracking-wider opacity-60">{s.tier.rank}</span>
                                   <span className="text-[11px] font-semibold leading-tight">{s.anchor}</span>
                                 </div>
                               );
