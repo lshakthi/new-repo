@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
   ArrowRight,
   Check,
+  Copy,
+  Crown,
   ExternalLink,
   LoaderCircle,
   Play,
@@ -23,6 +25,73 @@ const toolIcon: Record<NcbiToolId, typeof Dna> = {
   'sequence-search': GitBranch,
   'blast-sequence': Dna,
 };
+
+// Per-flow visual identity. Each NCBI tool gets its own accent color so the
+// three result types read as distinct at a glance, while staying inside the
+// CEI palette. `bar` is the left accent stripe; `tint`/`chip` theme the icon
+// and small labels; `grad` is a soft header wash.
+const flowAccent: Record<NcbiToolId, { bar: string; tint: string; chip: string; grad: string; label: string }> = {
+  'taxonomy-lineage': {
+    bar: 'bg-cei-blue',
+    tint: 'bg-cei-blue/10 text-cei-blue',
+    chip: 'bg-cei-blue/10 text-cei-blue',
+    grad: 'from-cei-blue/8 to-transparent',
+    label: 'Taxonomy',
+  },
+  'sequence-search': {
+    bar: 'bg-teal-600',
+    tint: 'bg-teal-600/10 text-teal-700',
+    chip: 'bg-teal-600/10 text-teal-700',
+    grad: 'from-teal-500/8 to-transparent',
+    label: 'Nucleotide records',
+  },
+  'blast-sequence': {
+    bar: 'bg-indigo-600',
+    tint: 'bg-indigo-600/10 text-indigo-700',
+    chip: 'bg-indigo-600/10 text-indigo-700',
+    grad: 'from-indigo-500/8 to-transparent',
+    label: 'Alignment hits',
+  },
+};
+
+// Color a nucleotide string by base (A/C/G/T/U) for the ORIGIN viewer.
+const BASE_COLOR: Record<string, string> = {
+  a: 'text-emerald-600',
+  c: 'text-blue-600',
+  g: 'text-amber-600',
+  t: 'text-rose-600',
+  u: 'text-fuchsia-600',
+};
+
+// Strength color for the BLAST identity gauge, from percent identity.
+function identityTone(pct: number): { bar: string; text: string } {
+  if (pct >= 98) return { bar: 'bg-emerald-500', text: 'text-emerald-700' };
+  if (pct >= 90) return { bar: 'bg-lime-500', text: 'text-lime-700' };
+  if (pct >= 80) return { bar: 'bg-amber-500', text: 'text-amber-700' };
+  return { bar: 'bg-orange-500', text: 'text-orange-700' };
+}
+
+// Render an ORIGIN block on a dark terminal, coloring each base while leaving
+// the numbered gutter and spacing intact. Splits on base runs so React keys
+// stay stable and non-base characters (digits, spaces) keep their muted color.
+let colorKey = 0;
+function colorizeOrigin(text: string): ReactNode[] {
+  const tokens = text.split(/([acgtunACGTUN]+)/);
+  return tokens.map((tok) => {
+    if (!tok) return null;
+    const isBases = /^[acgtunACGTUN]+$/.test(tok);
+    if (!isBases) {
+      return <span key={colorKey++} className="text-white/35">{tok}</span>;
+    }
+    return (
+      <span key={colorKey++}>
+        {tok.split('').map((ch) => (
+          <span key={colorKey++} className={BASE_COLOR[ch.toLowerCase()] ?? 'text-white/70'}>{ch}</span>
+        ))}
+      </span>
+    );
+  });
+}
 
 // Run a tool against the live NCBI APIs (with mock fallback inside ncbiApi).
 function callNcbi(
@@ -62,6 +131,7 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
   // but unavailable; a string = the sequence to show in-app.
   const [origins, setOrigins] = useState<Record<string, string | null>>({});
   const [loadingOrigin, setLoadingOrigin] = useState<string | null>(null);
+  const [copiedAccession, setCopiedAccession] = useState<string | null>(null);
   const [status, setStatus] = useState('Calling NCBI');
   const runToken = useRef(0);
   const didAutoRun = useRef(false);
@@ -113,6 +183,16 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
     setLoadingOrigin(null);
   };
 
+  const copyOrigin = async (accession: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedAccession(accession);
+      window.setTimeout(() => setCopiedAccession((cur) => (cur === accession ? null : cur)), 1500);
+    } catch {
+      // Clipboard unavailable (e.g. insecure context); silently ignore.
+    }
+  };
+
   useEffect(() => {
     if (autoRun && !didAutoRun.current) {
       didAutoRun.current = true;
@@ -128,17 +208,22 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
 
   const Icon = toolIcon[activeToolId];
   const isSequence = tool.inputKind === 'nucleotides';
+  const accent = flowAccent[activeToolId];
 
   return (
-    <div className="rounded-xl border border-cei-blue/20 bg-surface-elevated shadow-sm overflow-hidden">
+    <div className="relative flex rounded-xl border border-cei-blue/20 bg-surface-elevated shadow-sm overflow-hidden">
+      {/* Per-flow accent stripe */}
+      <div className={`w-1 shrink-0 ${accent.bar}`} aria-hidden="true" />
+      <div className="min-w-0 flex-1">
       {/* Tool header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle bg-cei-blue/5">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-cei-blue/10 text-cei-blue shrink-0">
+      <div className={`flex items-center gap-3 px-4 py-3 border-b border-border-subtle bg-gradient-to-r ${accent.grad}`}>
+        <div className={`grid h-8 w-8 place-items-center rounded-lg shrink-0 ${accent.tint}`}>
           <Icon size={16} aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-text-primary">{tool.name}</p>
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${accent.chip}`}>{accent.label}</span>
             <span className="rounded-full bg-surface-panel px-2 py-0.5 text-[9px] font-medium text-text-secondary">NCBI</span>
           </div>
           <p className="text-xs text-text-secondary truncate">{tool.question}</p>
@@ -203,9 +288,15 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
       {/* Live status */}
       {runState === 'running' && (
         <div className="px-4 pb-4" aria-live="polite" aria-busy="true">
-          <div className="flex items-center gap-2 rounded-lg border border-cei-blue/20 bg-cei-blue/5 px-3 py-2.5 text-xs text-cei-blue">
-            <LoaderCircle size={14} className="animate-spin shrink-0" />
-            <span>{status}…</span>
+          <div className={`overflow-hidden rounded-lg border border-cei-blue/20 bg-gradient-to-r ${accent.grad}`}>
+            <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-cei-blue">
+              <LoaderCircle size={14} className="animate-spin shrink-0" />
+              <span>{status}…</span>
+            </div>
+            {/* Indeterminate progress sweep */}
+            <div className="h-0.5 w-full overflow-hidden bg-cei-blue/10">
+              <div className={`h-full w-1/3 ${accent.bar} animate-[ncbi-sweep_1.4s_ease-in-out_infinite]`} />
+            </div>
           </div>
         </div>
       )}
@@ -248,23 +339,23 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
             )}
           </div>
 
-          {/* Taxonomy: key facts + lineage */}
+          {/* Taxonomy: key facts as a stat strip */}
           {result.taxon && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {result.taxon.map((t) => (
-                <div key={t.label} className="rounded-lg border border-border-subtle bg-surface-panel/50 px-3 py-2">
+                <div key={t.label} className="relative overflow-hidden rounded-lg border border-cei-blue/15 bg-gradient-to-b from-cei-blue/5 to-transparent px-3 py-2.5">
                   <p className="text-[9px] uppercase tracking-wider text-text-tertiary">{t.label}</p>
                   {t.href ? (
                     <a
                       href={t.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-cei-blue hover:text-cei-navy break-words"
+                      className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-cei-blue hover:text-cei-navy break-words"
                     >
                       {t.value} <ExternalLink size={10} className="shrink-0" />
                     </a>
                   ) : (
-                    <p className="mt-0.5 text-xs font-medium text-text-primary break-words">{t.value}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-text-primary break-words">{t.value}</p>
                   )}
                 </div>
               ))}
@@ -286,52 +377,129 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
             </button>
           )}
           {result.lineage && (
-            <div className="rounded-lg border border-border-subtle bg-surface-panel/40 px-3 py-2.5">
-              <p className="text-[9px] uppercase tracking-wider text-text-tertiary mb-1.5">Lineage (root → organism)</p>
-              <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
-                {result.lineage.map((node, i) => (
-                  <li key={`${node}-${i}`} className="flex items-center">
-                    <span className={`rounded px-1.5 py-0.5 text-[11px] ${
-                      i === result.lineage!.length - 1
-                        ? 'bg-cei-blue/10 font-semibold text-cei-blue'
-                        : 'text-text-secondary'
-                    }`}>{node}</span>
-                    {i < result.lineage!.length - 1 && <span className="text-text-tertiary mx-0.5">›</span>}
-                  </li>
-                ))}
+            <div className="rounded-lg border border-border-subtle bg-surface-panel/40 px-4 py-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <ListTree size={12} className="text-cei-blue" />
+                <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · root to organism</p>
+              </div>
+              {/* Vertical descent tree: each rank is a node on a connector rail,
+                  with the resolved organism highlighted as a gold leaf. */}
+              <ol className="relative">
+                {result.lineage.map((node, i) => {
+                  const isLeaf = i === result.lineage!.length - 1;
+                  const isRoot = i === 0;
+                  return (
+                    <li key={`${node}-${i}`} className="relative flex items-center" style={{ paddingLeft: `${Math.min(i, 10) * 12}px` }}>
+                      {/* connector rail */}
+                      {!isRoot && (
+                        <span className="absolute left-0 top-0 h-1/2 w-px bg-border-default" style={{ left: `${Math.min(i - 1, 9) * 12 + 5}px` }} aria-hidden="true" />
+                      )}
+                      {!isLeaf && (
+                        <span className="absolute bottom-0 top-1/2 w-px bg-border-default" style={{ left: `${Math.min(i, 10) * 12 + 5}px` }} aria-hidden="true" />
+                      )}
+                      {/* node dot */}
+                      <span
+                        className={`z-10 shrink-0 rounded-full ${
+                          isLeaf
+                            ? 'h-2.5 w-2.5 bg-cei-gold ring-2 ring-cei-gold/30'
+                            : isRoot
+                              ? 'h-2 w-2 bg-cei-blue'
+                              : 'h-1.5 w-1.5 bg-cei-blue-light/60'
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span
+                        className={`ml-2 py-0.5 text-[11px] leading-4 ${
+                          isLeaf
+                            ? 'font-semibold text-cei-navy'
+                            : isRoot
+                              ? 'font-medium text-text-secondary'
+                              : 'text-text-secondary'
+                        }`}
+                      >
+                        {node}
+                        {isLeaf && (
+                          <span className="ml-2 rounded-full bg-cei-gold/15 px-1.5 py-0.5 text-[9px] font-semibold text-cei-gold align-middle">organism</span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ol>
             </div>
           )}
 
-          {/* Sequence records (search + BLAST) */}
-          {result.records && (
-            <div className="space-y-1.5">
-              {result.records.map((rec) => {
+          {/* Records: BLAST hits render as a ranked leaderboard, sequence-search
+              records as DNA-accented cards. Both share the ORIGIN viewer. */}
+          {result.records && result.records.length > 0 && (
+            <div className="space-y-2">
+              {result.records.map((rec, idx) => {
                 const isOpen = expandedRecord === rec.accession;
-                // Prefer an ORIGIN that came with the result, else one we
-                // fetched on demand. `null` means fetched-but-unavailable.
                 const fetched = origins[rec.accession];
                 const originText = rec.origin ?? (fetched ?? undefined);
                 const isLoading = loadingOrigin === rec.accession;
                 const unavailable = !rec.origin && fetched === null;
+                const isBlast = result.toolId === 'blast-sequence';
+                const isTop = isBlast && idx === 0;
+                const pct = rec.identity ? parseInt(rec.identity, 10) : undefined;
+                const tone = pct != null ? identityTone(pct) : null;
+
                 return (
                   <div
                     key={rec.accession}
-                    className={`rounded-lg border bg-surface-panel/40 transition-colors ${isOpen ? 'border-cei-blue/30' : 'border-border-subtle'}`}
+                    className={`overflow-hidden rounded-xl border transition-all ${
+                      isTop
+                        ? 'border-cei-gold/40 bg-gradient-to-br from-cei-gold/8 to-transparent shadow-sm'
+                        : isOpen
+                          ? 'border-cei-blue/30 bg-surface-panel/40'
+                          : 'border-border-subtle bg-surface-panel/30 hover:border-cei-blue/20'
+                    }`}
                   >
-                    <div className="flex items-start gap-3 px-3 py-2.5">
+                    <div className="flex items-start gap-3 px-3 py-3">
+                      {/* Rank badge (BLAST) or DNA glyph (sequence search) */}
+                      {isBlast ? (
+                        <div
+                          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
+                            isTop ? 'bg-cei-gold text-white' : 'bg-indigo-600/10 text-indigo-700'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {isTop ? <Crown size={13} /> : idx + 1}
+                        </div>
+                      ) : (
+                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal-600/10 text-teal-700" aria-hidden="true">
+                          <Dna size={14} />
+                        </div>
+                      )}
+
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-[11px] font-semibold text-cei-blue">{rec.accession}</span>
-                          {rec.score && (
-                            <span className="rounded-full bg-surface-elevated px-1.5 py-0.5 text-[9px] font-medium text-text-secondary border border-border-subtle">
-                              score {rec.score}{rec.identity ? ` · ${rec.identity} id` : ''}{rec.eValue ? ` · E ${rec.eValue}` : ''}
+                          {isTop && (
+                            <span className="rounded-full bg-cei-gold/15 px-1.5 py-0.5 text-[9px] font-semibold text-cei-gold">Top match</span>
+                          )}
+                          {rec.organism && (
+                            <span className="rounded-full bg-surface-elevated px-1.5 py-0.5 text-[9px] font-medium text-text-secondary border border-border-subtle italic">
+                              {rec.organism}
                             </span>
                           )}
                           <span className="text-[10px] text-text-tertiary">{rec.length}</span>
                         </div>
                         <p className="mt-1 text-xs leading-5 text-text-primary">{rec.title}</p>
-                        <div className="mt-1.5 flex items-center gap-3">
+
+                        {/* BLAST identity/score gauge */}
+                        {isBlast && pct != null && tone && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="h-1.5 flex-1 max-w-[180px] overflow-hidden rounded-full bg-border-subtle">
+                              <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className={`text-[10px] font-semibold ${tone.text}`}>{rec.identity} identity</span>
+                            {rec.score && <span className="text-[10px] text-text-tertiary">· score {rec.score}</span>}
+                            {rec.eValue && <span className="text-[10px] text-text-tertiary">· E {rec.eValue}</span>}
+                          </div>
+                        )}
+
+                        <div className="mt-2 flex items-center gap-3">
                           <button
                             type="button"
                             onClick={() => toggleRecord(rec.accession, rec.origin)}
@@ -355,15 +523,36 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
 
                     {/* Sequence (GenBank ORIGIN) shown inline — no link-out needed */}
                     {isOpen && (
-                      <div className="border-t border-border-subtle px-3 py-2.5">
-                        <p className="text-[9px] uppercase tracking-wider text-text-tertiary mb-1.5">ORIGIN — nucleotide base pairs</p>
+                      <div className="border-t border-border-subtle bg-cei-navy/[0.02] px-3 py-2.5">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <p className="text-[9px] uppercase tracking-wider text-text-tertiary">ORIGIN · nucleotide base pairs</p>
+                          {originText && (
+                            <button
+                              type="button"
+                              onClick={() => copyOrigin(rec.accession, originText)}
+                              className="inline-flex items-center gap-1 text-[10px] font-medium text-text-tertiary hover:text-cei-blue"
+                            >
+                              {copiedAccession === rec.accession
+                                ? <><Check size={10} /> Copied</>
+                                : <><Copy size={10} /> Copy</>}
+                            </button>
+                          )}
+                        </div>
                         {isLoading ? (
                           <div className="flex items-center gap-2 rounded-md bg-surface-panel px-3 py-2 text-[11px] text-text-secondary">
                             <LoaderCircle size={12} className="animate-spin shrink-0" /> Fetching sequence from NCBI…
                           </div>
                         ) : originText ? (
-                          <pre className="overflow-x-auto rounded-md bg-surface-panel px-3 py-2 font-mono text-[10px] leading-4 text-text-secondary">{originText}</pre>
-                        ) : unavailable ? (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-md bg-cei-navy/95 px-3 py-1.5 mb-1.5 text-[9px] font-medium">
+                            {(['a', 'c', 'g', 't'] as const).map((b) => (
+                              <span key={b} className={`${BASE_COLOR[b]} uppercase`}>{b} <span className="text-white/40 normal-case">{b === 'a' ? 'adenine' : b === 'c' ? 'cytosine' : b === 'g' ? 'guanine' : 'thymine'}</span></span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {!isLoading && originText && (
+                          <pre className="overflow-x-auto rounded-md bg-cei-navy px-3 py-2 font-mono text-[10px] leading-4">{colorizeOrigin(originText)}</pre>
+                        )}
+                        {!isLoading && !originText && unavailable && (
                           <p className="text-[11px] text-text-tertiary italic">
                             Sequence could not be retrieved in-app.{' '}
                             <a href={rec.url} target="_blank" rel="noreferrer" className="text-cei-blue hover:text-cei-navy underline">
@@ -371,7 +560,7 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                             </a>{' '}
                             to view it.
                           </p>
-                        ) : null}
+                        )}
                       </div>
                     )}
                   </div>
@@ -392,6 +581,7 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
           </a>
         </div>
       )}
+      </div>
     </div>
   );
 }

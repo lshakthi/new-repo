@@ -205,3 +205,19 @@ body {
     animation: none;
   }
 }
+
+/* NCBI tool: indeterminate progress sweep while a query runs */
+@keyframes ncbi-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[ncbi-sweep_1\.4s_ease-in-out_infinite\] {
+    animation: none;
+  }
+}
