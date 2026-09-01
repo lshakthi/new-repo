@@ -487,68 +487,74 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                   });
 
                   const n = sections.length;
-                  const bandH = 58;          // px per section band
                   const fullW = 640;         // triangle base width (px)
-                  // Reserve a little apex above the first band so its chip has
-                  // room and doesn't sit in the point.
-                  const apexBands = 0.6;
-                  const totalBands = n + apexBands;
-                  const height = totalBands * bandH;
+                  const apexPad = 26;        // empty apex above the first band (px)
+                  const rankBlockH = 34;     // height of the rank chip
+                  const cladeRowH = 20;      // height per wrapped row of clade chips
+                  const cladePerRowW = 92;   // approx px width budget per clade chip
+
+                  // Give each band a height that fits its own content, so its
+                  // top/bottom divider lines always bracket exactly that band —
+                  // nothing crosses into a neighbor. Wider (lower) bands fit more
+                  // clade chips per row, so they need fewer rows.
+                  const bandHeights = sections.map((s, r) => {
+                    const topFrac = (r + 0.5) / n; // rough width fraction at this band
+                    const usableW = Math.max(120, topFrac * fullW - 24);
+                    const perRow = Math.max(1, Math.floor(usableW / cladePerRowW));
+                    const cladeRows = s.clades.length > 0 ? Math.ceil(s.clades.length / perRow) : 0;
+                    return rankBlockH + cladeRows * cladeRowH + 14; // + vertical breathing room
+                  });
+                  const contentH = bandHeights.reduce((a, b) => a + b, 0);
+                  const height = apexPad + contentH;
+
+                  // Cumulative pixel offsets → convert to % for the SVG lines.
+                  const offsets: number[] = [];
+                  let acc = apexPad;
+                  bandHeights.forEach((h) => { offsets.push(acc); acc += h; });
 
                   return (
                     <div className="relative mx-auto" style={{ height, width: fullW, maxWidth: '100%' }}>
-                      {/* Triangle outline + slice lines */}
+                      {/* Triangle outline + a slice line at each band boundary */}
                       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                         <polygon points={`50,0 100,100 0,100`} fill="none" stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-                        {sections.slice(1).map((_, r) => {
-                          const y = ((apexBands + r + 1) / totalBands) * 100;
-                          const half = (y / 100) * 50; // triangle half-width at this height
+                        {offsets.slice(1).map((offPx, r) => {
+                          const y = (offPx / height) * 100;
+                          const half = (y / 100) * 50;
                           return (
                             <line key={r} x1={50 - half} y1={y} x2={50 + half} y2={y} stroke="var(--color-border-default)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
                           );
                         })}
                       </svg>
 
-                      {/* Section content, each band clamped to the triangle's
-                          width at its narrowest (top) edge so nothing overflows
-                          the sloped sides. */}
-                      <div className="absolute inset-0 flex flex-col" style={{ paddingTop: `${apexBands * bandH}px` }}>
-                        {sections.map((s, r) => {
-                          // Fraction of full height at the TOP of this band.
-                          const topFrac = (apexBands + r) / totalBands;
-                          // Triangle width there, inset slightly so chips clear the edges.
-                          const bandMaxW = Math.max(96, topFrac * fullW - 16);
-                          return (
+                      {/* One absolutely-positioned band per section, sized to its
+                          own content and clamped to the triangle width at its top
+                          edge so content stays inside the sloped sides. */}
+                      {sections.map((s, r) => {
+                        const topFrac = offsets[r] / height;
+                        const bandMaxW = Math.max(96, topFrac * fullW - 16);
+                        const isLeaf = s.anchorIndex === lineage.length - 1;
+                        return (
                           <div
                             key={`${s.anchor}-${r}`}
-                            className="mx-auto flex flex-1 flex-col items-center justify-center gap-1"
-                            style={{ maxWidth: `${bandMaxW}px`, width: '100%' }}
+                            className="absolute left-1/2 flex -translate-x-1/2 flex-col items-center justify-center gap-1 overflow-hidden"
+                            style={{ top: offsets[r], height: bandHeights[r], maxWidth: `${bandMaxW}px`, width: '100%' }}
                           >
-                            {(() => {
-                              const isLeaf = s.anchorIndex === lineage.length - 1;
-                              if (isLeaf) {
-                                // The resolved species stands out: a circular
-                                // gold badge with a ring halo + DNA glyph, set
-                                // clearly apart from the flat rank chips above.
-                                return (
-                                  <div className="flex flex-col items-center gap-1">
-                                    <span className="text-[7px] font-bold uppercase tracking-wider text-cei-gold">{s.tier.rank}</span>
-                                    <div className="flex items-center gap-1.5 rounded-full bg-cei-gold px-3 py-1.5 text-white shadow-md ring-2 ring-cei-gold/30 ring-offset-2 ring-offset-surface-elevated">
-                                      <Dna size={12} aria-hidden="true" />
-                                      <span className="text-[12px] font-bold leading-tight">{s.anchor}</span>
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div className={`flex flex-col items-center rounded-lg px-2.5 py-0.5 text-center shadow-sm ${s.tier.chip}`}>
-                                  <span className="text-[7px] font-bold uppercase tracking-wider opacity-60">{s.tier.rank}</span>
-                                  <span className="text-[11px] font-semibold leading-tight">{s.anchor}</span>
+                            {isLeaf ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-[7px] font-bold uppercase tracking-wider text-cei-gold">{s.tier.rank}</span>
+                                <div className="flex items-center gap-1.5 rounded-full bg-cei-gold px-3 py-1.5 text-white shadow-md ring-2 ring-cei-gold/30 ring-offset-2 ring-offset-surface-elevated">
+                                  <Dna size={12} aria-hidden="true" />
+                                  <span className="text-[12px] font-bold leading-tight">{s.anchor}</span>
                                 </div>
-                              );
-                            })()}
+                              </div>
+                            ) : (
+                              <div className={`flex flex-col items-center rounded-lg px-2.5 py-0.5 text-center shadow-sm ${s.tier.chip}`}>
+                                <span className="text-[7px] font-bold uppercase tracking-wider opacity-60">{s.tier.rank}</span>
+                                <span className="text-[11px] font-semibold leading-tight">{s.anchor}</span>
+                              </div>
+                            )}
                             {s.clades.length > 0 && (
-                              <div className="flex flex-wrap items-center justify-center gap-1">
+                              <div className="flex flex-wrap items-center justify-center gap-1 px-1">
                                 {s.clades.map((c) => (
                                   <span key={c} className="rounded-full bg-surface-elevated/90 px-1.5 py-0.5 text-[9px] text-text-tertiary shadow-sm">
                                     {c}
@@ -557,9 +563,8 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                               </div>
                             )}
                           </div>
-                          );
-                        })}
-                      </div>
+                        );
+                      })}
                     </div>
                   );
                 })()}
