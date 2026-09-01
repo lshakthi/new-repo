@@ -222,15 +222,13 @@ function runTaxonomy(query: string): NcbiToolResult {
     ? ''
     : ' No exact match was resolved for this name, so an illustrative lineage is shown. Verify the organism spelling on NCBI.';
 
-  // Per the reference doc: the nucleotide count links to the list of nucleotide
-  // sequences for this taxon, e.g. nuccore/?term=txid9606
   const nucleotideListUrl = `https://www.ncbi.nlm.nih.gov/nuccore/?term=txid${id}`;
 
   return {
     toolId: 'taxonomy-lineage',
     query: display,
     headline: `${display} · taxon ${id}`,
-    summary: `Resolved "${display}" to NCBI taxon ID ${id} (rank: ${rank}) with a ${lineage.length}-node lineage. There are ${nucleotides} nucleotide sequences in GenBank for this taxon.${knownNote}`,
+    summary: `Resolved "${display}" to NCBI taxon ID ${id} (rank: ${rank}) with a ${lineage.length}-node lineage.${knownNote}`,
     lineage,
     taxonId: id,
     nucleotideCount: nucleotides,
@@ -239,7 +237,6 @@ function runTaxonomy(query: string): NcbiToolResult {
       { label: 'Taxon ID', value: id },
       { label: 'Rank', value: rank },
       { label: 'Lineage depth', value: `${lineage.length} nodes` },
-      { label: 'GenBank nucleotides', value: nucleotides, href: nucleotideListUrl },
     ],
     provenance: [
       { id: 'tx-1', action: `Searched taxonomy for "${display}"`, source: 'Entrez esearch (db=taxonomy)', duration: '0.6s', icon: 'search' },

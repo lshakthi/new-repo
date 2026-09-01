@@ -378,50 +378,36 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
           )}
           {result.lineage && (
             <div className="rounded-lg border border-border-subtle bg-surface-panel/40 px-4 py-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <ListTree size={12} className="text-cei-blue" />
-                <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · root to organism</p>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5">
+                  <ListTree size={12} className="text-cei-blue" />
+                  <p className="text-[9px] uppercase tracking-wider text-text-tertiary">Lineage · root to organism</p>
+                </div>
+                <span className="text-[9px] text-text-tertiary">{result.lineage.length} ranks</span>
               </div>
-              {/* Vertical descent tree: each rank is a node on a connector rail,
-                  with the resolved organism highlighted as a gold leaf. */}
-              <ol className="relative">
+              {/* Clean vertical list: one continuous rail, numbered rank steps,
+                  and the resolved organism highlighted at the end. */}
+              <ol className="relative ml-1 border-l border-border-default/70">
                 {result.lineage.map((node, i) => {
                   const isLeaf = i === result.lineage!.length - 1;
-                  const isRoot = i === 0;
                   return (
-                    <li key={`${node}-${i}`} className="relative flex items-center" style={{ paddingLeft: `${Math.min(i, 10) * 12}px` }}>
-                      {/* connector rail */}
-                      {!isRoot && (
-                        <span className="absolute left-0 top-0 h-1/2 w-px bg-border-default" style={{ left: `${Math.min(i - 1, 9) * 12 + 5}px` }} aria-hidden="true" />
-                      )}
-                      {!isLeaf && (
-                        <span className="absolute bottom-0 top-1/2 w-px bg-border-default" style={{ left: `${Math.min(i, 10) * 12 + 5}px` }} aria-hidden="true" />
-                      )}
-                      {/* node dot */}
+                    <li key={`${node}-${i}`} className="relative flex items-center gap-2.5 py-[3px] pl-4">
+                      {/* node marker sitting on the rail */}
                       <span
-                        className={`z-10 shrink-0 rounded-full ${
-                          isLeaf
-                            ? 'h-2.5 w-2.5 bg-cei-gold ring-2 ring-cei-gold/30'
-                            : isRoot
-                              ? 'h-2 w-2 bg-cei-blue'
-                              : 'h-1.5 w-1.5 bg-cei-blue-light/60'
+                        className={`absolute -left-[5px] rounded-full ring-2 ring-surface-panel ${
+                          isLeaf ? 'h-2.5 w-2.5 bg-cei-gold' : 'h-2 w-2 bg-cei-blue-light'
                         }`}
                         aria-hidden="true"
                       />
-                      <span
-                        className={`ml-2 py-0.5 text-[11px] leading-4 ${
-                          isLeaf
-                            ? 'font-semibold text-cei-navy'
-                            : isRoot
-                              ? 'font-medium text-text-secondary'
-                              : 'text-text-secondary'
-                        }`}
-                      >
-                        {node}
-                        {isLeaf && (
-                          <span className="ml-2 rounded-full bg-cei-gold/15 px-1.5 py-0.5 text-[9px] font-semibold text-cei-gold align-middle">organism</span>
-                        )}
-                      </span>
+                      <span className="w-5 shrink-0 text-right text-[9px] font-medium text-text-tertiary tabular-nums">{i + 1}</span>
+                      {isLeaf ? (
+                        <span className="inline-flex items-center gap-2 rounded-md bg-cei-gold/10 px-2 py-0.5">
+                          <span className="text-[12px] font-semibold text-cei-navy">{node}</span>
+                          <span className="rounded-full bg-cei-gold/20 px-1.5 py-0.5 text-[9px] font-semibold text-cei-gold">organism</span>
+                        </span>
+                      ) : (
+                        <span className="text-[11px] leading-4 text-text-secondary">{node}</span>
+                      )}
                     </li>
                   );
                 })}

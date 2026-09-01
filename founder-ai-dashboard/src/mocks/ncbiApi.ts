@@ -91,7 +91,6 @@ export async function fetchTaxonomy(organism: string): Promise<NcbiToolResult> {
         { label: 'Taxon ID', value: id },
         { label: 'Rank', value: rank },
         { label: 'Lineage depth', value: `${lineage.length} nodes` },
-        { label: 'GenBank nucleotides', value: 'View list', href: nucleotideListUrl },
       ],
       provenance: [
         { id: 'tx-1', action: `Searched taxonomy for "${organism}"`, source: 'Entrez esearch (db=taxonomy)', duration: '—', icon: 'search' },
