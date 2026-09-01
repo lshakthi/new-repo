@@ -462,40 +462,54 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
                   </div>
                 )}
 
-                {/* Pyramid: rows stack broadest→narrowest. Each row's width
-                    tapers with depth, forming a downward-narrowing pyramid that
-                    ends at the single organism (gold tip). Recognized ranks get
-                    their color + label; clades are slim neutral bands. */}
-                <div className="flex flex-col items-center gap-1">
+                {/* Indented hierarchy: a rank-label gutter keeps every name
+                    aligned, while recognized ranks step-indent to show nesting.
+                    A colored dot on a shared rail marks each rank; clades sit
+                    flush and muted. The organism is the highlighted final row. */}
+                <div className="relative">
                   {lineage.map((node, i) => {
                     const total = lineage.length;
                     const isLeaf = i === total - 1;
                     const tier = rankFor(node, isLeaf);
-                    // Taper width from 100% (root) down to ~34% (organism tip).
-                    const width = total > 1 ? 100 - (i / (total - 1)) * 66 : 100;
+                    // Step indent only advances at recognized ranks, so the tree
+                    // nests meaningfully without runaway indentation from clades.
+                    const step = lineage.slice(0, i).filter((n) => rankFor(n, false)).length;
+                    const indent = Math.min(step, 7) * 14;
                     return (
-                      <div
-                        key={`${node}-${i}`}
-                        className={`flex items-center justify-center gap-2 rounded-md px-3 text-center transition-colors ${
-                          tier
-                            ? `${tier.chip} ${isLeaf ? 'py-1.5 shadow-sm ring-1 ring-cei-gold/40' : 'py-1'}`
-                            : 'bg-border-subtle/60 py-0.5 text-text-secondary'
-                        }`}
-                        style={{ width: `${width}%`, minWidth: '120px' }}
-                      >
-                        {tier ? (
-                          <>
-                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">{tier.rank}</span>
-                            <span className={`${isLeaf ? 'text-[12px]' : 'text-[11px]'} font-semibold`}>{node}</span>
-                          </>
-                        ) : (
-                          <span className="text-[10px]">{node}</span>
-                        )}
+                      <div key={`${node}-${i}`} className="flex items-stretch">
+                        {/* rank-label gutter */}
+                        <div className="w-16 shrink-0 pr-2 text-right">
+                          {tier && (
+                            <span className={`text-[8px] font-bold uppercase tracking-wider ${tier.chip.split(' ').find((c) => c.startsWith('text-')) ?? 'text-text-tertiary'}`}>
+                              {tier.rank}
+                            </span>
+                          )}
+                        </div>
+                        {/* node + name, indented by depth */}
+                        <div className="flex items-center gap-2 py-0.5" style={{ paddingLeft: `${indent}px` }}>
+                          <span
+                            className={`shrink-0 rounded-full ${
+                              isLeaf
+                                ? 'h-2.5 w-2.5 bg-cei-gold ring-2 ring-cei-gold/30'
+                                : tier
+                                  ? `h-2 w-2 ${tier.dot}`
+                                  : 'h-1.5 w-1.5 bg-border-default'
+                            }`}
+                            aria-hidden="true"
+                          />
+                          {isLeaf ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-cei-gold/12 px-2 py-0.5">
+                              <span className="text-[12px] font-semibold text-cei-navy">{node}</span>
+                            </span>
+                          ) : (
+                            <span className={`text-[11px] leading-4 ${tier ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
+                              {node}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
-                  {/* pyramid tip */}
-                  <div className="h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-cei-gold" aria-hidden="true" />
                 </div>
               </div>
             );
