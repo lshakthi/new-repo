@@ -16,6 +16,17 @@ import { getNcbiTool } from '../mocks/ncbiTools';
 import type { NcbiToolId, NcbiToolResult } from '../mocks/ncbiTools';
 import { fetchBlast, fetchSequenceOrigin, fetchSequenceSearch, fetchTaxonomy } from '../mocks/ncbiApi';
 
+// A raw nucleotide/FASTA string should always go to BLAST, never a keyword
+// search. This guards against a sequence being pasted into the wrong tool
+// (e.g. "Sequence search"), which would otherwise return "no matches".
+function looksLikeSequence(text: string): boolean {
+  const raw = text.trim();
+  if (!raw) return false;
+  if (raw.startsWith('>')) return true; // FASTA
+  const compact = raw.replace(/\s+/g, '');
+  return compact.length >= 20 && /^[acgtun]+$/i.test(compact);
+}
+
 type RunState = 'idle' | 'running' | 'success';
 
 const toolIcon: Record<NcbiToolId, typeof Dna> = {
@@ -64,8 +75,17 @@ export function NcbiToolCard({ toolId, initialValue, autoRun = false }: NcbiTool
   const runToken = useRef(0);
   const didAutoRun = useRef(false);
 
-  const execute = async (runToolId: NcbiToolId, runValue: string) => {
+  const execute = async (requestedToolId: NcbiToolId, runValue: string) => {
     if (!runValue.trim() || runState === 'running') return;
+
+    // A pasted nucleotide sequence always belongs in BLAST. If it landed in a
+    // keyword/organism tool, reroute to BLAST so the user still gets matches.
+    const runToolId: NcbiToolId =
+      requestedToolId !== 'blast-sequence' && looksLikeSequence(runValue)
+        ? 'blast-sequence'
+        : requestedToolId;
+    if (runToolId !== activeToolId) setActiveToolId(runToolId);
+
     const token = ++runToken.current;
     setExpandedRecord(null);
     setOrigins({});
